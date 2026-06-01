@@ -52,4 +52,16 @@ describe('MCP artifact tools (in-memory client/server)', () => {
     expect(res.isError).toBe(true);
     expect((res.content as { type: string; text: string }[])[0].text).toContain('edit_token');
   });
+
+  it('sets visibility to password over the protocol', async () => {
+    const { client } = await connect();
+    const dep = await client.callTool({ name: 'deploy_html', arguments: { html: '<h1>v</h1>' } });
+    const out = dep.structuredContent as { slug: string; edit_token: string };
+    const res = await client.callTool({
+      name: 'set_visibility',
+      arguments: { slug: out.slug, visibility: 'password', password: 'pw', edit_token: out.edit_token },
+    });
+    expect(res.isError).toBeFalsy();
+    expect((res.structuredContent as { visibility: string }).visibility).toBe('password');
+  });
 });

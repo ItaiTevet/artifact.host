@@ -9,7 +9,11 @@ import { getIpHashFromHeaders } from '@/lib/http/request-context';
 
 type Extra = RequestHandlerExtra<ServerRequest, ServerNotification>;
 
-/** Derive the rate-limit IP bucket from the MCP request's forwarded headers. */
+/**
+ * Derive the rate-limit IP bucket from the MCP request's forwarded headers.
+ * When no headers are present (e.g. a stdio transport), this buckets all such
+ * callers together under the 'unknown' hash — acceptable for the current model.
+ */
 function ipFrom(extra: Extra): string {
   return getIpHashFromHeaders(extra.requestInfo?.headers ?? {});
 }
@@ -46,6 +50,8 @@ export function registerArtifactTools(server: McpServer, repo: ArtifactRepositor
     async (args, extra) => {
       try {
         const out = await deployHtml(repo, args, ipFrom(extra));
+        // Handler outputs are plain objects whose fields match the outputSchema; the
+        // double-cast only satisfies the SDK's index-signature type for structuredContent.
         return ok(
           `Deployed. Live URL: ${out.url}\nExpires: ${out.expires_at}\nedit_token (save to update later): ${out.edit_token}`,
           out as unknown as Record<string, unknown>,
