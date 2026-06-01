@@ -4,7 +4,9 @@
 **Status:** Approved design, ready for implementation planning
 **One-line pitch:** *Sign in with Google or GitHub when adding the MCP, and everything you deploy is owned by your account — anonymous use still works untouched.*
 
-This is **Plan 2b**, building directly on the shipped anonymous MCP endpoint (`docs/superpowers/plans/2026-06-01-mcp-endpoint.md`, live at `https://artifact-host-two.vercel.app/mcp`).
+This is **Plan 2b**, building directly on the shipped anonymous MCP endpoint (`docs/superpowers/plans/2026-06-01-mcp-endpoint.md`, currently live at `https://artifact-host-two.vercel.app/mcp`).
+
+> **Custom domain first.** The owner has purchased **`artifact.host`**. Because OAuth redirect URIs and the Google/GitHub callback URLs are *exact-match* and tedious to change later, this plan **attaches the custom domain before configuring OAuth**, so every URL below (`https://artifact.host/mcp`, `https://artifact.host/oauth/consent`, the Supabase Site URL, provider callbacks, `APP_BASE_URL`) is configured once against the final domain. The MCP endpoint becomes **`https://artifact.host/mcp`**.
 
 ---
 
@@ -114,10 +116,14 @@ No new business logic is added to the service layer; this is wiring + passing on
 
 ## Setup requirements
 
+**Custom domain (do this first):**
+- Add **`artifact.host`** to the Vercel project (`itaitevets-projects/artifact-host`) and set it as the production domain; configure the DNS records Vercel provides at the registrar (an action the owner performs where the domain is registered). Confirm `https://artifact.host` serves the app and `https://artifact.host/mcp` responds before configuring OAuth.
+- Repoint `APP_BASE_URL` (Vercel production env) to `https://artifact.host` and redeploy, so artifact URLs use the custom domain. Update `docs/mcp-connect.md`.
+
 **Supabase project (`bjztcxpqchwpdsrgapqp`):**
 - Enable the OAuth 2.1 server and **Dynamic Client Registration** (Authentication → OAuth Server; or `supabase/config.toml` `[auth.oauth_server] enabled = true`, `authorization_url_path = "/oauth/consent"`).
 - Ensure **asymmetric JWT signing keys** (RS256/ES256) are active so the RS can validate via JWKS.
-- Set the project **Site URL** to the production origin so the consent redirect resolves to `https://artifact-host-two.vercel.app/oauth/consent`.
+- Set the project **Site URL** to `https://artifact.host` so the consent redirect resolves to `https://artifact.host/oauth/consent`.
 
 **Identity providers (one-time, requires the project owner):**
 - **Google:** create an OAuth client in Google Cloud Console; add Supabase's callback URL; put the client id/secret into Supabase Auth → Providers → Google.
