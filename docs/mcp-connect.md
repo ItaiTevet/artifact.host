@@ -2,8 +2,8 @@
 
 artifact.host exposes a **streamable-HTTP** MCP endpoint.
 
+- **Production:** `https://artifact-host-two.vercel.app/mcp`
 - **Local dev:** `http://localhost:3000/mcp`
-- **Production:** `https://<your-vercel-domain>/mcp`
 
 ## Tools
 
@@ -24,7 +24,7 @@ Add a remote MCP server pointing at the endpoint URL. Example config block:
   "mcpServers": {
     "artifact-host": {
       "type": "streamable-http",
-      "url": "http://localhost:3000/mcp"
+      "url": "https://artifact-host-two.vercel.app/mcp"
     }
   }
 }

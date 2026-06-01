@@ -40,12 +40,20 @@ Built per `docs/superpowers/plans/2026-06-01-mcp-endpoint.md`, subagent-driven w
 - **73/73 tests pass** (58 prior + 15 new: errors 3, handlers 5, tools-integration 4, request-context 3), tsc clean, build compiles. Live HTTP smoke test confirmed: lists 3 tools, deploy works against real Supabase, returned URL renders with `x-robots-tag: noindex`.
 - Connect docs: `docs/mcp-connect.md`. **Decision (changed from spec):** streamable-HTTP only, no stdio shim — clients use a remote/HTTP MCP config or `npx mcp-remote`.
 
+## 🚀 Deployed to production (Vercel, session 3)
+
+- **Live:** `https://artifact-host-two.vercel.app` — MCP endpoint at `/mcp` (Vercel project `itaitevets-projects/artifact-host`, `prj_HlW9yIpkJmjK3TbpKAuERaRWwpQN`).
+- Deployed via **Vercel CLI** (`vercel deploy --prod`); the Vercel MCP connector can't set env vars, the CLI can. Project is **CLI-linked, not git-integrated** (`.vercel/` is gitignored).
+- **Production env vars set** (via `vercel env add … production`): `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `COOKIE_SECRET`, `CRON_SECRET` (reused from `.env.local`), `APP_BASE_URL=https://artifact-host-two.vercel.app`. **Prod reuses the dev Supabase project** (`bjztcxpqchwpdsrgapqp`) — same DB for dev and prod.
+- **Hobby-tier fix:** expiry cron changed hourly→daily (`0 0 * * *`) in `vercel.json` — Hobby allows only daily crons. Vercel auto-sends `Authorization: Bearer $CRON_SECRET` to the cron route, which it already checks.
+- **Verified live:** streamable-HTTP client lists 3 tools, `deploy_html` works against real Supabase, returned prod URL renders with `x-robots-tag: noindex`.
+- To redeploy: `vercel deploy --prod` from the repo root (CLI must be logged in: `vercel login`).
+
 ## Next steps, in order
 
-1. **Task 8 (gated):** deploy to Vercel + set prod env vars + verify hosted `/mcp`. Needs explicit user go-ahead (publishes the app).
-2. **Finish the branch:** merge `feat/mcp-endpoint` to `main` (or open a PR) via `superpowers:finishing-a-development-branch`.
-3. **Plan 2b — OAuth:** Supabase Auth on the MCP endpoint so authed tool calls own their artifacts (`ownerId` already plumbed through schema + service). Write with `superpowers:writing-plans`, then execute.
-4. **Plan 3 — Web UI** (below).
+1. **Plan 2b — OAuth:** Supabase Auth on the MCP endpoint so authed tool calls own their artifacts (`ownerId` already plumbed through schema + service). Write with `superpowers:writing-plans`, then execute.
+2. **Plan 3 — Web UI** (below).
+3. **Consider a custom domain** (e.g. artifact.host) on the Vercel project, and update `APP_BASE_URL` + `docs/mcp-connect.md` if so.
 
 ## Remaining plans (outlined in the spec, not yet written as detailed plans)
 
