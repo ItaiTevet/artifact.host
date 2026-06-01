@@ -1,11 +1,12 @@
 # Session Handoff — artifact.host
 
-**Last updated:** 2026-06-01 (session 2)
+**Last updated:** 2026-06-02 (session 3)
 
 ## Resume point
 
-- **Everything is on local `main`.** No outstanding feature branches — just `git checkout main`.
+- **Active branch: `feat/mcp-endpoint`** — the anonymous MCP endpoint (Plan 2) is built and verified here, NOT yet merged to `main`. Decide merge vs PR via `superpowers:finishing-a-development-branch`.
 - **Nothing is pushed to `origin`** (kept intentionally local). The work exists only in this working copy.
+- **Next unstarted work:** Task 8 (deploy to Vercel — gated on user confirmation), then Plan 2b (OAuth), then Plan 3 (Web UI).
 
 ## Where things stand
 
@@ -29,13 +30,26 @@
 - **58/58 tests pass** — 48 unit + 10 integration, all green against real DB
 - **E2e verified:** deploy → view (iframe + `x-robots-tag: noindex`) → update → password-gate → cron expire — all working
 
+## ✅ Completed in session 3 (Plan 2 — anonymous MCP endpoint, branch `feat/mcp-endpoint`)
+
+Built per `docs/superpowers/plans/2026-06-01-mcp-endpoint.md`, subagent-driven with two-stage review per task.
+- **`/mcp` streamable-HTTP endpoint** (`app/[transport]/route.ts`) via `mcp-handler` (stateless, SSE disabled), advertising as `artifact.host` v1.0.0.
+- Three tools over the existing service: `deploy_html`, `update_html`, `set_visibility` (`lib/mcp/tools.ts`), built on pure handlers (`lib/mcp/handlers.ts`) + actionable error mapping (`lib/mcp/errors.ts`).
+- **Anonymous edit-token model** (no OAuth yet); `ownerId` stays null. IP rate-limit bucket derived from MCP request headers (`getIpHashFromHeaders`).
+- New deps: `mcp-handler@1.1.0`, `@modelcontextprotocol/sdk@1.26.0`, `zod@^3`.
+- **73/73 tests pass** (58 prior + 15 new: errors 3, handlers 5, tools-integration 4, request-context 3), tsc clean, build compiles. Live HTTP smoke test confirmed: lists 3 tools, deploy works against real Supabase, returned URL renders with `x-robots-tag: noindex`.
+- Connect docs: `docs/mcp-connect.md`. **Decision (changed from spec):** streamable-HTTP only, no stdio shim — clients use a remote/HTTP MCP config or `npx mcp-remote`.
+
 ## Next steps, in order
 
-1. **Write Plan 2** (MCP endpoint + OAuth) using the `superpowers:writing-plans` skill, then execute. Both Plan 2 and Plan 3 are adapters over the existing service layer.
+1. **Task 8 (gated):** deploy to Vercel + set prod env vars + verify hosted `/mcp`. Needs explicit user go-ahead (publishes the app).
+2. **Finish the branch:** merge `feat/mcp-endpoint` to `main` (or open a PR) via `superpowers:finishing-a-development-branch`.
+3. **Plan 2b — OAuth:** Supabase Auth on the MCP endpoint so authed tool calls own their artifacts (`ownerId` already plumbed through schema + service). Write with `superpowers:writing-plans`, then execute.
+4. **Plan 3 — Web UI** (below).
 
 ## Remaining plans (outlined in the spec, not yet written as detailed plans)
 
-- **Plan 2 — MCP endpoint + OAuth:** `/mcp` streamable-HTTP route exposing `deploy_html` / `update_html` / `set_visibility` over the existing service; OAuth so authed users own their artifacts (`ownerId` is already plumbed through schema + service); `npx artifact-host-mcp` stdio shim.
+- **Plan 2b — OAuth on the MCP endpoint:** authed users own their artifacts; unauth calls stay anonymous (edit-token only). Supabase Auth backs identity.
 - **Plan 3 — Web UI + sharing niceties:** the approved homepage (`docs/superpowers/specs/2026-06-01-homepage-mockup.html` — Lora + JetBrains Mono, platform picker + connect snippets + manual paste), Supabase auth, dashboard, `@vercel/og` branded OG cards, QR codes.
 
 ## Carried-over UI follow-ups (from the design audit)
@@ -46,6 +60,8 @@ Mobile header collapses at ~390px; no `:focus-visible` states; self-host brand i
 
 - Spec: `docs/superpowers/specs/2026-06-01-html-artifact-sharing-design.md`
 - Plan 1: `docs/superpowers/plans/2026-06-01-foundation-core-service.md`
+- Plan 2 (MCP endpoint): `docs/superpowers/plans/2026-06-01-mcp-endpoint.md`
+- MCP connect guide: `docs/mcp-connect.md`
 - Homepage mockup: `docs/superpowers/specs/2026-06-01-homepage-mockup.html`
 
 ## Gotcha for the agent
