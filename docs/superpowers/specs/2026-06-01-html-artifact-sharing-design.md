@@ -173,10 +173,11 @@ Custom domains · multi-file/ZIP · build pipelines · serverless/edge functions
 
 ---
 
-## Open questions for the implementation plan
+## Resolved decisions (post-brainstorming)
 
-1. **OG screenshot thumbnails** — true screenshots need a headless browser, which doesn't fit Vercel serverless cleanly. Options: (a) ship v1 with title-only OG cards, add screenshots later via a separate service; (b) use a third-party screenshot API. **Leaning (a)** to stay in scope.
-2. **Live-artifact cap value** — what's the concrete number (per account / per anon)? Pick a generous default.
-3. **Rate limiting** on deploy to prevent abuse (anon especially) — approach (IP-based? Supabase-backed counter?).
-4. **MCP auth** — how does an authenticated user's MCP calls associate to their account vs. anonymous (API key in MCP config?).
+1. **OG thumbnails → branded card via `@vercel/og` (`next/og`).** Edge/Node function renders a clean, on-brand card from the artifact's `<title>` + a short extracted text snippet + an accent color pulled from the HTML. **Not** a screenshot. Chosen because: built into Next.js App Router (no dependency); CDN-cached automatically so each card generates once (crawler-only traffic → effectively free on Hobby tier); and reliable precisely because we render our *own* simple flexbox JSX rather than arbitrary artifact HTML (Satori supports only flexbox + a CSS subset, no grid/JS). Constraint: 500KB bundle incl. fonts — met easily. Robots: `Allow` the OG route so crawlers can fetch it.
+2. **MCP auth → OAuth on the MCP endpoint.** The `/mcp` streamable-HTTP endpoint authenticates via OAuth so an authed user's tool calls are owned by their account; unauthenticated calls remain anonymous (edit-token only). More build effort than an API key, but the chosen UX. Supabase Auth backs the identity.
+3. **Live-artifact cap → Anon: 5 (per IP) / Account: 50.** Conservative for a side project; self-clears via 30-day expiry. Deploys/day stay generous.
+4. **Rate limiting → IP-based counter** (Supabase-backed) on the deploy endpoint, anonymous path especially.
+5. **Expiry → Vercel Cron** running `DELETE FROM artifacts WHERE expires_at < now()`.
 ```
