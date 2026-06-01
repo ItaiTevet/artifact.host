@@ -1,6 +1,6 @@
 # Session Handoff — artifact.host
 
-**Last updated:** 2026-06-01
+**Last updated:** 2026-06-01 (session 2)
 
 ## Resume point
 
@@ -19,16 +19,19 @@
 **Also on `main` (integration tests, currently dormant):**
 - Real-DB integration contract tests: `lib/db/__tests__/artifact-repository.integration.test.ts` (10 tests). They **skip** unless `.env.local` has `NEXT_PUBLIC_SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (loaded via `dotenv` in `vitest.setup.ts`).
 
-## The gap to close (why this handoff exists)
+## ✅ Completed in session 2
 
-The unit tests cover the **domain logic** but run against the in-memory fake. The **Supabase adapter + SQL + full e2e are UNVERIFIED** — no DB was available. The new session has the Supabase MCP/connector enabled to fix this.
+- Applied all 3 migrations to the live Supabase project (`bjztcxpqchwpdsrgapqp`, region ap-northeast-1):
+  - `0001_artifacts.sql` — table + indexes
+  - `0002_increment_view_count.sql` — RPC function
+  - `0003_grants.sql` — explicit `GRANT ALL … TO service_role` (required for new Supabase projects that no longer auto-grant)
+- Wrote `.env.local` with real URL + `sb_secret_...` key (new Supabase key format, replaces `service_role` JWT)
+- **58/58 tests pass** — 48 unit + 10 integration, all green against real DB
+- **E2e verified:** deploy → view (iframe + `x-robots-tag: noindex`) → update → password-gate → cron expire — all working
 
 ## Next steps, in order
 
-1. **Set up Supabase** (a dev/test project): create it, apply `supabase/migrations/0001_artifacts.sql` and `0002_increment_view_count.sql` (SQL editor or `supabase db push`), then fill `.env.local` from `.env.example` (`NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `COOKIE_SECRET`, `CRON_SECRET`). With the Supabase MCP, the agent can apply migrations and read project keys directly.
-2. **Activate the integration tests:** `npm test` — the 10 skipped tests should now run green against the real DB. Fix any adapter/SQL bugs they surface (this is the riskiest, hand-written query code).
-3. **True e2e:** `npm run dev`, then deploy via curl → view in browser → update → password-gate → trigger cron. Confirm `X-Robots-Tag: noindex`. (Optionally add `scripts/e2e.mjs` for a one-command run.)
-4. **Write Plan 2** (MCP endpoint + OAuth) using the `superpowers:writing-plans` skill, then execute. Both Plan 2 and Plan 3 are adapters over the existing service layer.
+1. **Write Plan 2** (MCP endpoint + OAuth) using the `superpowers:writing-plans` skill, then execute. Both Plan 2 and Plan 3 are adapters over the existing service layer.
 
 ## Remaining plans (outlined in the spec, not yet written as detailed plans)
 
