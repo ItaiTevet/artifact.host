@@ -19,13 +19,14 @@ export async function deployHtml(
   repo: ArtifactRepository,
   args: DeployArgs,
   ipHash: string,
+  ownerId: string | null = null,
 ): Promise<DeployOut> {
   const r = await deployArtifact(repo, {
     content: args.html,
     ttl: args.ttl,
     visibility: args.visibility,
     password: args.password ?? null,
-    ownerId: null,
+    ownerId,
     ipHash,
   });
   return { url: r.url, slug: r.slug, edit_token: r.editToken, expires_at: r.expiresAt.toISOString() };
@@ -44,9 +45,10 @@ export interface UpdateOut {
 export async function updateHtml(
   repo: ArtifactRepository,
   args: UpdateArgs,
+  ownerId: string | null = null,
 ): Promise<UpdateOut> {
   const r = await updateArtifact(repo, args.slug, args.html, {
-    ownerId: null,
+    ownerId,
     editToken: args.edit_token,
   });
   return { url: r.url, expires_at: r.expiresAt.toISOString() };
@@ -66,9 +68,10 @@ export interface VisibilityOut {
 export async function setArtifactVisibility(
   repo: ArtifactRepository,
   args: VisibilityArgs,
+  ownerId: string | null = null,
 ): Promise<VisibilityOut> {
   await setVisibility(repo, args.slug, args.visibility, args.password ?? null, {
-    ownerId: null,
+    ownerId,
     editToken: args.edit_token,
   });
   return { slug: args.slug, visibility: args.visibility };

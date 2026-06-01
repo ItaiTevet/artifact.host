@@ -46,4 +46,33 @@ describe('mcp handlers', () => {
     expect(out.visibility).toBe('password');
     expect((await repo.findBySlug(dep.slug))!.passwordHash).toBeTruthy();
   });
+
+  it('deployHtml sets owner_id when an ownerId is given', async () => {
+    const repo = new InMemoryRepository();
+    const out = await deployHtml(repo, { html: '<h1>a</h1>' }, IP, 'owner-1');
+    expect((await repo.findBySlug(out.slug))!.ownerId).toBe('owner-1');
+  });
+
+  it('deployHtml leaves owner_id null when no ownerId is given (anonymous)', async () => {
+    const repo = new InMemoryRepository();
+    const out = await deployHtml(repo, { html: '<h1>a</h1>' }, IP);
+    expect((await repo.findBySlug(out.slug))!.ownerId).toBeNull();
+  });
+
+  it('updateHtml authorizes the owner without an edit token', async () => {
+    const repo = new InMemoryRepository();
+    const dep = await deployHtml(repo, { html: '<h1>a</h1>' }, IP, 'owner-1');
+    // No edit_token, but the same owner — must succeed.
+    const out = await updateHtml(repo, { slug: dep.slug, html: '<h1>b</h1>', edit_token: '' }, 'owner-1');
+    expect(out.url).toContain(dep.slug);
+    expect((await repo.findBySlug(dep.slug))!.content).toBe('<h1>b</h1>');
+  });
+
+  it('updateHtml rejects a non-owner with no valid edit token', async () => {
+    const repo = new InMemoryRepository();
+    const dep = await deployHtml(repo, { html: '<h1>a</h1>' }, IP, 'owner-1');
+    await expect(
+      updateHtml(repo, { slug: dep.slug, html: '<h1>b</h1>', edit_token: '' }, 'someone-else'),
+    ).rejects.toMatchObject({ code: 'forbidden' });
+  });
 });
