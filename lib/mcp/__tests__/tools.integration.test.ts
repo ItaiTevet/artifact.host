@@ -3,7 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { InMemoryRepository } from '@/lib/artifacts/__tests__/in-memory-repository';
-import { registerArtifactTools } from '@/lib/mcp/tools';
+import { registerArtifactTools, ownerFrom } from '@/lib/mcp/tools';
 
 async function connect() {
   const repo = new InMemoryRepository();
@@ -63,5 +63,18 @@ describe('MCP artifact tools (in-memory client/server)', () => {
     });
     expect(res.isError).toBeFalsy();
     expect((res.structuredContent as { visibility: string }).visibility).toBe('password');
+  });
+});
+
+describe('ownerFrom', () => {
+  it('reads the user id from extra.authInfo.extra.userId', () => {
+    expect(ownerFrom({ authInfo: { extra: { userId: 'u-1' } } })).toBe('u-1');
+  });
+  it('returns null when there is no authInfo (anonymous)', () => {
+    expect(ownerFrom({})).toBeNull();
+  });
+  it('returns null when userId is missing or non-string', () => {
+    expect(ownerFrom({ authInfo: { extra: {} } })).toBeNull();
+    expect(ownerFrom({ authInfo: { extra: { userId: 42 } } })).toBeNull();
   });
 });
