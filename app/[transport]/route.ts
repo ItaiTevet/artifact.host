@@ -11,8 +11,9 @@ const handler = createMcpHandler(
     const repo = new SupabaseArtifactRepository(getServiceClient());
     registerArtifactTools(server, repo);
   },
-  {},
-  { basePath: '' },
+  { serverInfo: { name: 'artifact.host', version: '1.0.0' } },
+  { basePath: '', disableSse: true },
 );
 
+// GET/DELETE are part of the MCP HTTP transport surface; the handler returns 405 for unsupported methods.
 export { handler as GET, handler as POST, handler as DELETE };
