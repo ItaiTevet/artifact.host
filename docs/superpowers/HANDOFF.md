@@ -1,12 +1,24 @@
 # Session Handoff — artifact.host
 
-**Last updated:** 2026-06-02 (session 3)
+**Last updated:** 2026-06-02 (session 4)
 
 ## Resume point
 
-- **Active branch: `feat/mcp-endpoint`** — the anonymous MCP endpoint (Plan 2) is built and verified here, NOT yet merged to `main`. Decide merge vs PR via `superpowers:finishing-a-development-branch`.
+- **On `main`.** Plan 2 (anonymous MCP endpoint) and **Plan 2b Part A (MCP OAuth code)** are both merged to local `main`.
 - **Nothing is pushed to `origin`** (kept intentionally local). The work exists only in this working copy.
-- **Next unstarted work:** Task 8 (deploy to Vercel — gated on user confirmation), then Plan 2b (OAuth), then Plan 3 (Web UI).
+- **Next unstarted work:** brainstorming → spec → plan → build **Plan 3 (Web UI)**. The Plan 2b **go-live ops** (below) were intentionally deferred to a single batch after the web UI code lands.
+
+## Plan 2b status — code DONE, live setup DEFERRED
+
+Plan: `docs/superpowers/plans/2026-06-02-mcp-oauth.md`. **Part A (Tasks 1–6) is complete and merged** — `jose` JWT validation (`lib/mcp/auth.ts`, fail-closed to anonymous), `owner_id` threaded through handlers/tools, `/mcp` wrapped with `withMcpAuth({required:false})` + `/.well-known/oauth-protected-resource` metadata route, and the `/oauth/consent` Google/GitHub page. 86/86 tests pass; build clean; anonymous HTTP path verified live; Opus review found no serious bugs.
+
+**Go-live checklist (Part B, Tasks 7–10 — pure ops, do as one batch, domain-first):**
+1. **DNS for `artifact.host`** (registered at Squarespace). Domain already added to Vercel project `artifact-host`. Either add `A @ 76.76.21.21` at Squarespace (keeps DNS there) OR delegate nameservers to `ns1/ns2.vercel-dns.com` (Vercel-managed; only if nothing else uses the domain). Decision pending.
+2. Repoint Vercel prod `APP_BASE_URL=https://artifact.host`; add `NEXT_PUBLIC_SUPABASE_ANON_KEY` (publishable key) to Vercel prod; redeploy.
+3. **Supabase dashboard:** enable OAuth 2.1 server + Dynamic Client Registration; consent path `/oauth/consent`; confirm asymmetric (RS256) signing keys; Site URL `https://artifact.host` + add `/oauth/consent` to redirect allow-list.
+4. **Google + GitHub OAuth apps** (owner): callback `https://bjztcxpqchwpdsrgapqp.supabase.co/auth/v1/callback`; paste Client ID/secret into Supabase → Auth → Providers. These same providers also power the Plan 3 website login.
+5. **Verify e2e:** add `https://artifact.host/mcp` to an MCP client → Google + GitHub sign-in → consent → owned deploy (`owner_id` set); confirm anonymous still works. Keep `NEXT_PUBLIC_SUPABASE_URL` with NO trailing slash so issuer `…/auth/v1` matches Supabase's `iss`.
+6. Update `docs/mcp-connect.md` (custom-domain URLs + a "Sign in (optional)" note).
 
 ## Where things stand
 
