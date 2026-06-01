@@ -4,9 +4,8 @@
 
 ## Resume point
 
-- **Branch to check out:** `test/supabase-integration` — it contains everything (it is `main` + the Supabase integration tests).
-- **`main`** has Plan 1 merged. `test/supabase-integration` is one commit ahead of `main`.
-- **Nothing is pushed to `origin` yet** (10 local commits ahead of `origin/main`). Consider `git push` for backup before/after the next session.
+- **Everything is on local `main`.** No outstanding feature branches — just `git checkout main`.
+- **Nothing is pushed to `origin`** (kept intentionally local). The work exists only in this working copy.
 
 ## Where things stand
 
@@ -17,7 +16,7 @@
 - HTTP: `POST /api/deploy`, `PATCH /api/artifacts/[slug]`, viewer `app/a/[slug]` with server-side password gate + signed cookie, `X-Robots-Tag` via `proxy.ts`, expiry cron `app/api/cron/expire`.
 - **48 unit tests pass, tsc clean, build compiles.**
 
-**Done, NOT merged (branch `test/supabase-integration`):**
+**Also on `main` (integration tests, currently dormant):**
 - Real-DB integration contract tests: `lib/db/__tests__/artifact-repository.integration.test.ts` (10 tests). They **skip** unless `.env.local` has `NEXT_PUBLIC_SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (loaded via `dotenv` in `vitest.setup.ts`).
 
 ## The gap to close (why this handoff exists)
@@ -29,8 +28,7 @@ The unit tests cover the **domain logic** but run against the in-memory fake. Th
 1. **Set up Supabase** (a dev/test project): create it, apply `supabase/migrations/0001_artifacts.sql` and `0002_increment_view_count.sql` (SQL editor or `supabase db push`), then fill `.env.local` from `.env.example` (`NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `COOKIE_SECRET`, `CRON_SECRET`). With the Supabase MCP, the agent can apply migrations and read project keys directly.
 2. **Activate the integration tests:** `npm test` — the 10 skipped tests should now run green against the real DB. Fix any adapter/SQL bugs they surface (this is the riskiest, hand-written query code).
 3. **True e2e:** `npm run dev`, then deploy via curl → view in browser → update → password-gate → trigger cron. Confirm `X-Robots-Tag: noindex`. (Optionally add `scripts/e2e.mjs` for a one-command run.)
-4. **Merge** `test/supabase-integration` → `main` once integration + e2e are green.
-5. **Write Plan 2** (MCP endpoint + OAuth) using the `superpowers:writing-plans` skill, then execute. Both Plan 2 and Plan 3 are adapters over the existing service layer.
+4. **Write Plan 2** (MCP endpoint + OAuth) using the `superpowers:writing-plans` skill, then execute. Both Plan 2 and Plan 3 are adapters over the existing service layer.
 
 ## Remaining plans (outlined in the spec, not yet written as detailed plans)
 
