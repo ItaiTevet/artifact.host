@@ -18,6 +18,12 @@ function ipFrom(extra: Extra): string {
   return getIpHashFromHeaders(extra.requestInfo?.headers ?? {});
 }
 
+/** Read the authenticated user id (set by withMcpAuth) from the tool-call context, or null. */
+export function ownerFrom(extra: { authInfo?: { extra?: Record<string, unknown> } }): string | null {
+  const id = extra.authInfo?.extra?.userId;
+  return typeof id === 'string' ? id : null;
+}
+
 /** Cast a plain result object to CallToolResult for the SDK's index-signature requirement. */
 function ok(content: string, structuredContent: Record<string, unknown>): CallToolResult {
   return { content: [{ type: 'text', text: content }], structuredContent };
@@ -49,7 +55,7 @@ export function registerArtifactTools(server: McpServer, repo: ArtifactRepositor
     },
     async (args, extra) => {
       try {
-        const out = await deployHtml(repo, args, ipFrom(extra));
+        const out = await deployHtml(repo, args, ipFrom(extra), ownerFrom(extra));
         // Handler outputs are plain objects whose fields match the outputSchema; the
         // double-cast only satisfies the SDK's index-signature type for structuredContent.
         return ok(
@@ -79,9 +85,9 @@ export function registerArtifactTools(server: McpServer, repo: ArtifactRepositor
       },
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true },
     },
-    async (args) => {
+    async (args, extra) => {
       try {
-        const out = await updateHtml(repo, args);
+        const out = await updateHtml(repo, args, ownerFrom(extra));
         return ok(
           `Updated. Live URL: ${out.url}\nExpires (unchanged): ${out.expires_at}`,
           out as unknown as Record<string, unknown>,
@@ -110,9 +116,9 @@ export function registerArtifactTools(server: McpServer, repo: ArtifactRepositor
       },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     },
-    async (args) => {
+    async (args, extra) => {
       try {
-        const out = await setArtifactVisibility(repo, args);
+        const out = await setArtifactVisibility(repo, args, ownerFrom(extra));
         return ok(
           `Visibility for ${out.slug} is now '${out.visibility}'.`,
           out as unknown as Record<string, unknown>,
