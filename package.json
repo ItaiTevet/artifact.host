@@ -1,0 +1,26 @@
+{
+  "name": "artifact-host",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.106.2",
+    "nanoid": "^5.1.11",
+    "next": "16.2.7",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5",
+    "vitest": "^3.2.6"
+  }
+}
