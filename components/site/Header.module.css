@@ -8,14 +8,7 @@
 .nav { display: flex; align-items: center; gap: 26px; }
 .nav a { font-size: 12px; color: var(--ink-2); letter-spacing: .04em; }
 .nav a:hover { color: var(--ink); }
-.inert { font-size: 12px; color: var(--ink-3); letter-spacing: .04em; cursor: default; }
-.signin {
-  font-size: 12px; color: var(--ink-3);
-  border: 1px solid var(--rule); padding: 6px 16px; border-radius: 2px;
-  letter-spacing: .03em; cursor: default;
-}
 @media (max-width: 480px) {
   .header { padding: 0 18px; }
   .nav { gap: 14px; }
-  .inert { display: none; }
 }
