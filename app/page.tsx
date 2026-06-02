@@ -1,5 +1,6 @@
 import { Header } from '@/components/site/Header';
 import { Footer } from '@/components/site/Footer';
+import { ConnectPicker } from '@/components/home/ConnectPicker';
 import styles from './home.module.css';
 
 export default function Home() {
@@ -13,7 +14,7 @@ export default function Home() {
             One tool call from your agent. Renders live at a short URL — nothing to install for viewers.
           </p>
         </div>
-        {/* CONNECT_PICKER_SLOT (Task 4) */}
+        <ConnectPicker mcpUrl={`${process.env.APP_BASE_URL ?? 'http://localhost:3000'}/mcp`} />
         {/* DEPLOY_PANEL_SLOT (Task 6) */}
       </main>
       <Footer />
