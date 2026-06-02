@@ -16,6 +16,16 @@ export interface ArtifactRecord {
   viewCount: number;
 }
 
+/** Lightweight projection for the dashboard list (no content blob). */
+export interface ArtifactSummary {
+  slug: string;
+  title: string | null;
+  visibility: Visibility;
+  createdAt: Date;
+  expiresAt: Date;
+  viewCount: number;
+}
+
 /** Caller auth presented on update/visibility changes. */
 export interface AuthContext {
   ownerId?: string | null;

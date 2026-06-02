@@ -1,4 +1,4 @@
-import type { ArtifactRecord, Visibility } from '@/lib/artifacts/types';
+import type { ArtifactRecord, ArtifactSummary, Visibility } from '@/lib/artifacts/types';
 
 export interface NewArtifact {
   slug: string;
@@ -19,6 +19,8 @@ export interface ArtifactRepository {
   updateContent(slug: string, content: string, title: string | null): Promise<ArtifactRecord>;
   updateVisibility(slug: string, visibility: Visibility, passwordHash: string | null): Promise<ArtifactRecord>;
   incrementViews(slug: string): Promise<void>;
+  listByOwner(ownerId: string, now: Date): Promise<ArtifactSummary[]>;
+  deleteOwned(slug: string, ownerId: string): Promise<boolean>;
   countLiveByOwner(ownerId: string, now: Date): Promise<number>;
   countLiveByIp(ipHash: string, now: Date): Promise<number>;
   countRecentDeploysByIp(ipHash: string, since: Date): Promise<number>;

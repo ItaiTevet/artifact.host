@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { ArtifactRecord, Visibility } from '@/lib/artifacts/types';
+import type { ArtifactRecord, ArtifactSummary, Visibility } from '@/lib/artifacts/types';
 import type { ArtifactRepository, NewArtifact } from '@/lib/artifacts/repository';
 
 interface Row {
@@ -62,6 +62,30 @@ export class SupabaseArtifactRepository implements ArtifactRepository {
   async incrementViews(slug: string): Promise<void> {
     const { error } = await this.db.rpc('increment_view_count', { p_slug: slug });
     if (error) throw error;
+  }
+
+  async listByOwner(ownerId: string, now: Date): Promise<ArtifactSummary[]> {
+    const { data, error } = await this.db.from('artifacts')
+      .select('slug, title, visibility, created_at, expires_at, view_count')
+      .eq('owner_id', ownerId)
+      .gt('expires_at', now.toISOString())
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data ?? []).map((r) => ({
+      slug: r.slug as string,
+      title: (r.title as string | null) ?? null,
+      visibility: r.visibility as Visibility,
+      createdAt: new Date(r.created_at as string),
+      expiresAt: new Date(r.expires_at as string),
+      viewCount: Number(r.view_count),
+    }));
+  }
+
+  async deleteOwned(slug: string, ownerId: string): Promise<boolean> {
+    const { data, error } = await this.db.from('artifacts')
+      .delete().eq('slug', slug).eq('owner_id', ownerId).select('id');
+    if (error) throw error;
+    return (data?.length ?? 0) > 0;
   }
 
   async countLiveByOwner(ownerId: string, now: Date): Promise<number> {
