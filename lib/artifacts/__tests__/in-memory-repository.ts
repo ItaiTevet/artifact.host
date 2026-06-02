@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { ArtifactRecord, Visibility } from '@/lib/artifacts/types';
+import type { ArtifactRecord, ArtifactSummary, Visibility } from '@/lib/artifacts/types';
 import type { ArtifactRepository, NewArtifact } from '@/lib/artifacts/repository';
 
 export class InMemoryRepository implements ArtifactRepository {
@@ -46,6 +46,23 @@ export class InMemoryRepository implements ArtifactRepository {
   async incrementViews(slug: string): Promise<void> {
     const row = this.rows.get(slug);
     if (row) row.viewCount += 1;
+  }
+
+  async listByOwner(ownerId: string, now: Date): Promise<ArtifactSummary[]> {
+    return [...this.rows.values()]
+      .filter((r) => r.ownerId === ownerId && r.expiresAt > now)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .map((r) => ({
+        slug: r.slug, title: r.title, visibility: r.visibility,
+        createdAt: r.createdAt, expiresAt: r.expiresAt, viewCount: r.viewCount,
+      }));
+  }
+
+  async deleteOwned(slug: string, ownerId: string): Promise<boolean> {
+    const row = this.rows.get(slug);
+    if (!row || row.ownerId !== ownerId) return false;
+    this.rows.delete(slug);
+    return true;
   }
 
   async countLiveByOwner(ownerId: string, now: Date): Promise<number> {

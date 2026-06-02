@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { AccountMenu } from '@/components/dashboard/AccountMenu';
 import styles from './Header.module.css';
 
 export function Header() {
@@ -9,9 +10,7 @@ export function Header() {
       </Link>
       <nav className={styles.nav}>
         <Link href="/docs">docs</Link>
-        {/* dashboard + sign in are wired in Plan 3b — inert for now. */}
-        <span className={styles.inert} aria-disabled="true">dashboard</span>
-        <span className={styles.signin} aria-disabled="true">sign in</span>
+        <AccountMenu />
       </nav>
     </header>
   );

@@ -1,0 +1,12 @@
+.row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 4px; border-bottom: 1px solid var(--rule); }
+.main { min-width: 0; }
+.title { font-family: var(--serif); font-size: 16px; color: var(--ink); font-weight: 600; }
+.slug { font-family: var(--mono); font-size: 12px; color: var(--amber); font-weight: 400; }
+.meta { display: flex; gap: 14px; align-items: center; margin-top: 5px; font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
+.badge { text-transform: uppercase; letter-spacing: .04em; font-size: 10.5px; padding: 2px 7px; border-radius: 3px; }
+.pub { background: #eef3ec; color: #4f7a52; }
+.pw { background: #f3ece0; color: #9a6a1e; }
+.actions { display: flex; gap: 8px; flex-shrink: 0; }
+.act { font-family: var(--mono); font-size: 12px; color: var(--ink-2); border: 1px solid var(--rule); border-radius: 4px; padding: 5px 11px; background: #fff; cursor: pointer; text-decoration: none; }
+.act:hover { border-color: var(--ink-2); }
+.amber { color: var(--amber); border-color: #e3c69e; }
