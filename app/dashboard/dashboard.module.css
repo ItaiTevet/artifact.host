@@ -1,0 +1,6 @@
+.wrap { max-width: 720px; margin: 0 auto; padding: 32px 20px 80px; }
+.h1 { font-family: var(--serif); font-size: 26px; color: var(--ink); margin: 0 0 20px; }
+.list { display: flex; flex-direction: column; }
+.empty { font-size: 15px; color: var(--ink-3); line-height: 1.6; }
+.empty a { color: var(--amber); }
+.status { max-width: 720px; margin: 0 auto; padding: 48px 20px; text-align: center; color: var(--ink-3); }
