@@ -56,7 +56,7 @@ describe('deleteArtifact', () => {
     await repo.insert(seed({ slug: 'a1', ownerId: 'owner-2' }));
     await expect(deleteArtifact(repo, 'missing', 'owner-1')).rejects.toMatchObject({ code: 'not_found' });
     await expect(deleteArtifact(repo, 'a1', 'owner-1')).rejects.toMatchObject({ code: 'forbidden' });
-    expect(repo.findBySlug('a1')).resolves.not.toBeNull();
+    await expect(repo.findBySlug('a1')).resolves.not.toBeNull();
   });
 });
 
