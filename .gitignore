@@ -45,3 +45,7 @@ next-env.d.ts
 
 # Playwright MCP artifacts
 .playwright-mcp/
+
+# local dev/smoke logs
+.dev.log
+.smoke.log

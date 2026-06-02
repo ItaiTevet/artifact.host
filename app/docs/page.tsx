@@ -1,5 +1,4 @@
 import { Header } from '@/components/site/Header';
-import { Footer } from '@/components/site/Footer';
 import styles from './docs.module.css';
 
 export const metadata = { title: 'Docs — artifact.host' };
@@ -61,7 +60,6 @@ x-edit-token: <token>
           once at deploy and never extended by updates.
         </p>
       </main>
-      <Footer />
     </>
   );
 }

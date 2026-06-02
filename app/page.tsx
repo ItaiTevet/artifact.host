@@ -1,5 +1,4 @@
 import { Header } from '@/components/site/Header';
-import { Footer } from '@/components/site/Footer';
 import { ConnectPicker } from '@/components/home/ConnectPicker';
 import { DeployPanel } from '@/components/home/DeployPanel';
 import styles from './home.module.css';
@@ -23,7 +22,6 @@ export default function Home() {
         </div>
         <DeployPanel />
       </main>
-      <Footer />
     </>
   );
 }

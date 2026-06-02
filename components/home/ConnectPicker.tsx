@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { buildConnectSnippets, type PlatformId } from '@/lib/web/connect';
+import { buildConnectSnippets, highlightSnippet, type PlatformId } from '@/lib/web/connect';
 import { PlatformIcon } from './PlatformIcon';
 import styles from './ConnectPicker.module.css';
 
@@ -34,7 +34,7 @@ export function ConnectPicker({ mcpUrl }: { mcpUrl: string }) {
             className={`${styles.tab} ${active === s.id ? styles.activeTab : ''}`}
             onClick={() => toggle(s.id)}
           >
-            <PlatformIcon id={s.id} />
+            <PlatformIcon id={s.id} name={s.name} />
             <span className={styles.tabName}>{s.name}</span>
           </button>
         ))}
@@ -42,7 +42,20 @@ export function ConnectPicker({ mcpUrl }: { mcpUrl: string }) {
       {current && (
         <div className={styles.snippet}>
           <div className={styles.step}>{current.step}</div>
-          <pre className={styles.code}>{current.code}</pre>
+          <pre className={styles.code}>
+            {highlightSnippet(current.code).map((line, i) => (
+              <span key={i}>
+                {i > 0 ? '\n' : ''}
+                {line.map((t, j) =>
+                  t.kind === 'plain' ? (
+                    <span key={j}>{t.text}</span>
+                  ) : (
+                    <span key={j} className={styles[t.kind]}>{t.text}</span>
+                  ),
+                )}
+              </span>
+            ))}
+          </pre>
           <button className={styles.copy} onClick={copy}>{copied ? 'copied ✓' : 'copy'}</button>
         </div>
       )}
