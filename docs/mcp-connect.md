@@ -2,7 +2,7 @@
 
 artifact.host exposes a **streamable-HTTP** MCP endpoint.
 
-- **Production:** `https://artifact-host-two.vercel.app/mcp`
+- **Production:** `https://artifact.host/mcp`
 - **Local dev:** `http://localhost:3000/mcp`
 
 ## Tools
@@ -15,6 +15,10 @@ artifact.host exposes a **streamable-HTTP** MCP endpoint.
 
 `deploy_html` returns `{ url, slug, edit_token, expires_at }`. **Save `edit_token`** — it is shown once and is required to update or change visibility later. Anonymous (no-login) usage is fully supported via this token.
 
+## Sign in (optional)
+
+The endpoint is **dual-mode**. Anonymous use works with no account (edit-token model above). If your MCP client supports remote OAuth (e.g. Claude), connecting to `https://artifact.host/mcp` will trigger a browser sign-in: the client auto-discovers the authorization server from the endpoint's protected-resource metadata, you sign in with **Google or GitHub** on the artifact.host consent page, approve, and the client connects. Artifacts you deploy while signed in are owned by your account, so you can manage them in the web dashboard at `https://artifact.host/dashboard`. Signing in is never required — anonymous deploys keep working.
+
 ## Clients that speak streamable-HTTP MCP directly
 
 Add a remote MCP server pointing at the endpoint URL. Example config block:
@@ -24,7 +28,7 @@ Add a remote MCP server pointing at the endpoint URL. Example config block:
   "mcpServers": {
     "artifact-host": {
       "type": "streamable-http",
-      "url": "https://artifact-host-two.vercel.app/mcp"
+      "url": "https://artifact.host/mcp"
     }
   }
 }
