@@ -1,0 +1,7 @@
+.account { display: inline-flex; align-items: center; gap: 14px; }
+.link { color: var(--ink-2); }
+.link:hover { color: var(--ink); }
+.email { font-size: 12px; color: var(--ink-3); font-family: var(--font-mono); }
+.signout { font-size: 13px; color: var(--ink-2); background: none; border: none; cursor: pointer; padding: 0; font-family: inherit; }
+.signout:hover { color: var(--amber); }
+.placeholder { display: inline-block; width: 64px; }
