@@ -4,6 +4,7 @@ import { useState, type KeyboardEvent } from 'react';
 import { validateDeployInput, buildDeployPayload, type Ttl, type Visibility } from '@/lib/web/deploy';
 import { deployErrorMessage } from '@/lib/web/errors';
 import { ResultCard, type DeployResult } from './ResultCard';
+import { PasswordField } from '@/components/ui/PasswordField';
 import styles from './DeployPanel.module.css';
 
 const TTLS: Ttl[] = ['1h', '1d', '7d', '30d'];
@@ -71,9 +72,8 @@ export function DeployPanel() {
       </div>
 
       {visibility === 'password' && (
-        <input
+        <PasswordField
           className={styles.password}
-          type="password"
           placeholder="Password for viewers"
           value={password}
           onChange={(e) => setPassword(e.target.value)}

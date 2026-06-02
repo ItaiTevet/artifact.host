@@ -44,3 +44,22 @@ remove this; the domain is intrinsic to where the OAuth callback physically live
 - Re-point the Google + GitHub OAuth app callback URLs and the Supabase URL config
   to the custom auth domain.
 - Purely a trust/polish improvement — sign-in is fully functional without it.
+
+### 5. Upload an HTML file instead of pasting
+Let users deploy by selecting/dropping an `.html` file rather than pasting into the
+textarea:
+- File picker + drag-and-drop onto the deploy panel; read the file client-side and
+  feed it through the existing deploy path.
+- Reuse the current guardrails (5 MB cap, content validation).
+- Keep paste as the default; this is an additional input mode, not a replacement.
+
+### 6. Homepage "look and feel" video illustration
+The real artifact.host experience happens inside the AI platform (agent calls the MCP
+tool, gets back a live link), which the marketing homepage can't currently convey.
+Add a short, polished motion illustration of the agent + MCP flow:
+- E.g. a Hyperframe-style animated sequence: user asks the AI → agent calls
+  `deploy_html` → live URL appears → page renders.
+- Goal is to communicate the end-to-end feel without making the visitor leave for an
+  AI client.
+- Evaluate tooling (Hyperframe / Rive / Lottie / screen-capture) and keep it
+  lightweight (lazy-loaded, accessible fallback).

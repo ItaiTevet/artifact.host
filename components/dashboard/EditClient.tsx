@@ -6,6 +6,7 @@ import { getAccessToken } from '@/lib/web/supabase-browser';
 import { validateEditInput, editErrorMessage } from '@/lib/web/dashboard';
 import type { Visibility } from '@/lib/web/deploy';
 import { SignInGate } from './SignInGate';
+import { PasswordField } from '@/components/ui/PasswordField';
 import styles from '@/app/dashboard/[slug]/edit.module.css';
 
 type Phase = 'loading' | 'signedOut' | 'notFound' | 'ready';
@@ -99,7 +100,7 @@ export function EditClient({ slug }: { slug: string }) {
           <button type="button" className={visibility === 'password' ? styles.on : ''} onClick={() => setVisibility('password')}>password</button>
         </div>
         {visibility === 'password' && (
-          <input className={styles.password} type="password" placeholder="Password for viewers"
+          <PasswordField className={styles.password} placeholder="Password for viewers"
             value={password} onChange={(e) => setPassword(e.target.value)} />
         )}
       </div>
