@@ -33,3 +33,14 @@ Let users edit a deployed artifact directly in the browser instead of re-pasting
 - Live preview and save back through the existing update path.
 - Consider guardrails around the 5 MB cap, sanitization, and the
   "expiry set once, never extended" invariant.
+
+### 4. Remove `supabase.co` from the OAuth sign-in screens
+Today the Google and GitHub sign-in screens display the Supabase callback domain
+(`bjztcxpqchwpdsrgapqp.supabase.co`) — e.g. "to continue to …supabase.co" (Google)
+and "Authorizing will redirect to …supabase.co" (GitHub). App-name branding cannot
+remove this; the domain is intrinsic to where the OAuth callback physically lives.
+- Enable the **Supabase Custom Domain** add-on (paid, ~$10/mo) to serve auth from
+  our own domain (e.g. `auth.artifact.host`).
+- Re-point the Google + GitHub OAuth app callback URLs and the Supabase URL config
+  to the custom auth domain.
+- Purely a trust/polish improvement — sign-in is fully functional without it.
