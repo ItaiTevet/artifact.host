@@ -12,7 +12,7 @@ function typeHtml(html: string) {
 
 describe('DeployPanel', () => {
   it('posts the right payload and swaps to the result card on success', async () => {
-    const fetchMock = vi.fn(async () => new Response(
+    const fetchMock = vi.fn(async (_url: string, _init: RequestInit) => new Response(
       JSON.stringify({ slug: 'x7k2', url: 'https://artifact.host/a/x7k2', edit_token: 'tok_abc', expires_at: '2099-01-01T00:00:00Z' }),
       { status: 201, headers: { 'content-type': 'application/json' } },
     ));
@@ -25,7 +25,7 @@ describe('DeployPanel', () => {
     await waitFor(() => expect(screen.getByText(/artifact\.host\/a\/x7k2/)).toBeTruthy());
     expect(screen.getByText(/tok_abc/)).toBeTruthy();
     const [, init] = fetchMock.mock.calls[0];
-    expect(JSON.parse(init.body)).toEqual({ content: '<h1>hi</h1>', ttl: '7d', visibility: 'public' });
+    expect(JSON.parse(init.body as string)).toEqual({ content: '<h1>hi</h1>', ttl: '7d', visibility: 'public' });
   });
 
   it('shows a mapped inline error on API failure', async () => {
