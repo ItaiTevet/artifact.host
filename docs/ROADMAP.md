@@ -63,3 +63,11 @@ Add a short, polished motion illustration of the agent + MCP flow:
   AI client.
 - Evaluate tooling (Hyperframe / Rive / Lottie / screen-capture) and keep it
   lightweight (lazy-loaded, accessible fallback).
+
+### 7. User-defined artifact title
+Today an artifact's `title` is auto-parsed from the HTML `<title>` tag (used for the
+OG card and the dashboard list). Let users set or override it explicitly:
+- An optional `title` field on the deploy panel and the dashboard edit page.
+- An optional `title` parameter on the `deploy_html` / `update_html` MCP tools.
+- Fall back to the parsed `<title>` (then a generic default) when none is given.
+- Drives the OG card heading and the dashboard list label.
