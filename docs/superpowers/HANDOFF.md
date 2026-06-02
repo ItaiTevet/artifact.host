@@ -1,14 +1,25 @@
 # Session Handoff — artifact.host
 
-**Last updated:** 2026-06-02 (session 5)
+**Last updated:** 2026-06-02 (session 6)
 
 ## Resume point
 
-- **Plan 3a (public web UI) is DONE on branch `feat/web-ui-public`** (not yet merged to `main` — see the Plan 3a block below). Plan 2 (anonymous MCP endpoint) and **Plan 2b Part A (MCP OAuth code)** are merged to local `main`.
+- **Plan 3a (public web UI) is DONE and merged to `main`.** **Plan 3b (sign-in + dashboard) is DONE on branch `feat/web-ui-dashboard`** (see the Plan 3b block below) — pending the finishing-a-development-branch step (merge/PR decision). Plan 2 (anonymous MCP endpoint) and **Plan 2b Part A (MCP OAuth code)** are on `main`.
 - **Nothing is pushed to `origin`** (kept intentionally local). The work exists only in this working copy.
-- **Next unstarted work:** merge `feat/web-ui-public` → `main`, then **Plan 3b (sign-in + dashboard)**. The Plan 2b **go-live ops** (below) remain deferred to a single batch (the Plan 3b auth work shares that same Supabase Google/GitHub setup).
+- **Next unstarted work:** the Plan 2b **go-live ops batch** (below) — DNS + Supabase OAuth server enable + Google/GitHub OAuth apps + e2e. This is the ONE thing gating real sign-in for BOTH the MCP consent flow and the new web dashboard (they share the same Supabase Google/GitHub providers). All Plan 3b code is built, type-checked, and unit/component/contract-tested; only the live click-through sign-in depends on this batch.
 
-## Plan 3a (public web UI) — DONE (branch `feat/web-ui-public`)
+## Plan 3b (sign-in + dashboard) — DONE (branch `feat/web-ui-dashboard`)
+
+Authenticated web dashboard. Login reuses the existing browser Supabase client (factored into `lib/web/supabase-browser.ts` singleton: `getAccessToken`/`getAccountEmail`/`signIn`/`signOut`). The dashboard sends `session.access_token` as a Bearer to new authed API routes, which verify it via a **shared `verifySupabaseToken`** (`lib/auth/supabase-token.ts`, extracted from the MCP auth path so MCP + web share one audited verifier) and call the service layer with `{ ownerId }`. Ownership enforced **server-side in the service** (no RLS, no new deps).
+- **Routes:** `/dashboard` (ledger-row list of the signed-in user's artifacts; signed-out → in-page Google/GitHub gate; empty state; per-row Open/Edit/Delete with confirm + optimistic remove) and `/dashboard/<slug>` (dedicated edit page: HTML textarea, visibility public⇄password, Save). Header `dashboard`/`sign in` placeholders now wired to `<AccountMenu/>`.
+- **API:** `GET /api/artifacts` (list, summary projection — no content blobs), `GET /api/artifacts/[slug]` (editor fetch, owner-only), `DELETE /api/artifacts/[slug]` (owner-only), and `PATCH` extended with a Bearer/owner path alongside the existing anonymous edit-token path (anonymous editing preserved).
+- **Data:** repo `listByOwner`/`deleteOwned` (+ `ArtifactSummary` type); service `listOwnArtifacts`/`getOwnArtifact`/`deleteArtifact`. Real-DB contract tests added (`listByOwner`/`deleteOwned`) — ran green against the live Supabase project.
+- **Deliberate deviation from spec:** the row's "change visibility" affordance folds into Edit (visibility lives on the edit page), avoiding an inline password flow. Row actions are Open · Edit · Delete.
+- **Known follow-up (UX papercut, not blocking):** editing a password-protected artifact's content re-requires the viewer password because the edit page loads the password field empty and `validateEditInput` requires it when visibility is `password`. Consider relaxing validation to only require a password when newly enabling/changing protection.
+- Plan: `docs/superpowers/plans/2026-06-02-web-ui-dashboard.md`; spec: `docs/superpowers/specs/2026-06-02-web-ui-dashboard-design.md`. **150/150 tests pass, tsc clean, build clean** (`/dashboard` + `/dashboard/[slug]` in the route table; both serve HTTP 200 on a prod-build smoke). Subagent-driven (Opus implementers + two-stage review). No new npm deps.
+- **Roadmap backlog** captured at `docs/ROADMAP.md`: comprehensive analytics, team/sharing/permissions, in-browser visual (WYSIWYG) artifact editing.
+
+## Plan 3a (public web UI) — DONE (merged to `main`)
 
 Branded shell (Lora + JetBrains Mono via `next/font`, brand tokens in `app/globals.css`), homepage (connect-your-AI platform picker + anonymous paste-deploy with inline result card), `/docs` (MCP tools + REST API reference), branded OG cards (`next/og`, with missing/expired fallback) + client-side QR, reskinned viewer password gate + branded `not-found`. Deploys via the existing `POST /api/deploy` (no business logic added in the UI). Auth header links (`dashboard`/`sign in`) render but are **inert** (wired in Plan 3b). New deps: `qrcode` (+ `@types/qrcode`), dev `@testing-library/react` + `jsdom`. Component-test infra: `vitest.config.ts` now globs `**/*.test.{ts,tsx}` and uses `pool: 'forks'` + `--experimental-require-module` (needed for jsdom under Node 22.11; remove once Node ≥ 22.12). Plan: `docs/superpowers/plans/2026-06-02-web-ui-public.md`; spec: `docs/superpowers/specs/2026-06-02-web-ui-public-design.md`. **107/107 tests pass, tsc clean, build clean**; live smoke (prod build): `/`→200, `/docs`→200, missing slug→404, OG→`image/png`. Subagent-driven (Opus implementers + review). **Carried-over manual audit (not blocking):** eyeball the ~390px mobile header, `:focus-visible` rings, and the `⌘↵`/`Ctrl+↵` deploy shortcut against the mockup in a browser.
 
