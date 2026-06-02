@@ -14,6 +14,7 @@ export function EditClient({ slug }: { slug: string }) {
   const [phase, setPhase] = useState<Phase>('loading');
   const [content, setContent] = useState('');
   const [visibility, setVisibility] = useState<Visibility>('public');
+  const [loadedVisibility, setLoadedVisibility] = useState<Visibility>('public');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -22,13 +23,18 @@ export function EditClient({ slug }: { slug: string }) {
   const load = useCallback(async () => {
     const token = await getAccessToken();
     if (!token) { setPhase('signedOut'); return; }
-    const res = await fetch(`/api/artifacts/${slug}`, { headers: { Authorization: `Bearer ${token}` } });
-    if (res.status === 401) { setPhase('signedOut'); return; }
-    if (!res.ok) { setPhase('notFound'); return; }
-    const data = await res.json();
-    setContent(data.content as string);
-    setVisibility(data.visibility as Visibility);
-    setPhase('ready');
+    try {
+      const res = await fetch(`/api/artifacts/${slug}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (res.status === 401) { setPhase('signedOut'); return; }
+      if (!res.ok) { setPhase('notFound'); return; }
+      const data = await res.json();
+      setContent(data.content as string);
+      setVisibility(data.visibility as Visibility);
+      setLoadedVisibility(data.visibility as Visibility);
+      setPhase('ready');
+    } catch {
+      setPhase('notFound');
+    }
   }, [slug]);
 
   useEffect(() => { void load(); }, [load]);
@@ -49,12 +55,17 @@ export function EditClient({ slug }: { slug: string }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) { setError(editErrorMessage(data?.error)); return; }
-      if (visibility === 'password') {
-        await fetch(`/api/artifacts/${slug}`, {
+      // Persist a visibility change whenever it differs from what we loaded, or when
+      // a new password is being set on an already-password-protected artifact.
+      if (visibility !== loadedVisibility || (visibility === 'password' && password)) {
+        const vres = await fetch(`/api/artifacts/${slug}`, {
           method: 'PATCH',
           headers: { 'content-type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ visibility, password }),
+          body: JSON.stringify(visibility === 'password' ? { visibility, password } : { visibility }),
         });
+        const vdata = await vres.json().catch(() => ({}));
+        if (!vres.ok) { setError(editErrorMessage(vdata?.error)); return; }
+        setLoadedVisibility(visibility);
       }
       setSaved(true);
     } catch {
@@ -84,8 +95,8 @@ export function EditClient({ slug }: { slug: string }) {
       <div className={styles.controls}>
         <span className={styles.label}>Visibility</span>
         <div className={styles.seg}>
-          <button className={visibility === 'public' ? styles.on : ''} onClick={() => setVisibility('public')}>public</button>
-          <button className={visibility === 'password' ? styles.on : ''} onClick={() => setVisibility('password')}>password</button>
+          <button type="button" className={visibility === 'public' ? styles.on : ''} onClick={() => setVisibility('public')}>public</button>
+          <button type="button" className={visibility === 'password' ? styles.on : ''} onClick={() => setVisibility('password')}>password</button>
         </div>
         {visibility === 'password' && (
           <input className={styles.password} type="password" placeholder="Password for viewers"

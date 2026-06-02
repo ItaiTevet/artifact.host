@@ -48,4 +48,40 @@ describe('EditClient', () => {
     render(<EditClient slug="gone" />);
     await waitFor(() => expect(screen.getByText(/gone or has expired/i)).toBeTruthy());
   });
+
+  it('persists a public→password change with a second visibility PATCH', async () => {
+    getAccessToken.mockResolvedValue('good-token');
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(jsonResponse({ slug: 'a3f9', title: 'Q3', content: '<h1>hi</h1>', visibility: 'public', expires_at: '2099-01-01T00:00:00Z' }))
+      .mockResolvedValueOnce(jsonResponse({ slug: 'a3f9', url: 'u', expires_at: '2099-01-01T00:00:00Z' })) // content PATCH
+      .mockResolvedValueOnce(jsonResponse({ ok: true })); // visibility PATCH
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<EditClient slug="a3f9" />);
+    await waitFor(() => expect(screen.getByLabelText(/html/i)).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: /^password$/i }));
+    fireEvent.change(screen.getByPlaceholderText(/password for viewers/i), { target: { value: 'pw' } });
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+
+    await waitFor(() => expect(screen.getByText(/saved/i)).toBeTruthy());
+    expect(JSON.parse(fetchMock.mock.calls[2][1].body as string)).toEqual({ visibility: 'password', password: 'pw' });
+  });
+
+  it('persists a password→public change (the previously-broken direction)', async () => {
+    getAccessToken.mockResolvedValue('good-token');
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(jsonResponse({ slug: 'a3f9', title: 'Q3', content: '<h1>hi</h1>', visibility: 'password', expires_at: '2099-01-01T00:00:00Z' }))
+      .mockResolvedValueOnce(jsonResponse({ slug: 'a3f9', url: 'u', expires_at: '2099-01-01T00:00:00Z' })) // content PATCH
+      .mockResolvedValueOnce(jsonResponse({ ok: true })); // visibility PATCH
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<EditClient slug="a3f9" />);
+    await waitFor(() => expect(screen.getByLabelText(/html/i)).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: /^public$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /save/i }));
+
+    await waitFor(() => expect(screen.getByText(/saved/i)).toBeTruthy());
+    expect(fetchMock.mock.calls).toHaveLength(3);
+    expect(JSON.parse(fetchMock.mock.calls[2][1].body as string)).toEqual({ visibility: 'public' });
+  });
 });
