@@ -55,4 +55,22 @@ describe('DashboardClient', () => {
     expect(init.method).toBe('DELETE');
     expect((init.headers as Record<string, string>).Authorization).toBe('Bearer good-token');
   });
+
+  it('restores the row when the delete fails (optimistic removal is resynced)', async () => {
+    getAccessToken.mockResolvedValue('good-token');
+    const artifact = { slug: 'a3f9', title: 'Q3 Revenue', visibility: 'public', created_at: '2026-06-01T00:00:00Z', expires_at: '2099-01-01T00:00:00Z', view_count: 1 };
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(jsonResponse({ artifacts: [artifact] })) // initial load
+      .mockResolvedValueOnce(jsonResponse({ error: 'internal', message: 'x' }, 500)) // failed DELETE
+      .mockResolvedValueOnce(jsonResponse({ artifacts: [artifact] })); // resync load restores the row
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<DashboardClient />);
+    await waitFor(() => expect(screen.getByText('Q3 Revenue')).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^delete$/i }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3)); // load → DELETE(500) → resync load
+    await waitFor(() => expect(screen.getByText('Q3 Revenue')).toBeTruthy()); // row restored
+  });
 });

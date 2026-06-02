@@ -36,8 +36,15 @@ export function DashboardClient() {
   async function remove(slug: string) {
     const token = await getAccessToken();
     if (!token) { setState({ phase: 'signedOut' }); return; }
+    // Optimistically drop the row, then resync if the delete didn't actually stick.
     setState((s) => (s.phase === 'ready' ? { phase: 'ready', items: s.items.filter((i) => i.slug !== slug) } : s));
-    await fetch(`/api/artifacts/${slug}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+    try {
+      const res = await fetch(`/api/artifacts/${slug}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      if (res.status === 401) { setState({ phase: 'signedOut' }); return; }
+      if (!res.ok) { await load(); } // restore the row — the server rejected the delete
+    } catch {
+      await load(); // network failure — restore the row
+    }
   }
 
   if (state.phase === 'loading') return <p className={styles.status}>Loading…</p>;
