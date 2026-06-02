@@ -38,7 +38,7 @@ function newArtifact(suffix: string, over: Partial<NewArtifact> = {}): NewArtifa
 describe.skipIf(!hasEnv)('SupabaseArtifactRepository (integration)', () => {
   let db: SupabaseClient;
   let repo: SupabaseArtifactRepository;
-  let createdUserId: string | null = null;
+  const createdUserIds: string[] = [];
 
   beforeAll(() => {
     db = createClient(URL!, KEY!, { auth: { persistSession: false } });
@@ -48,8 +48,8 @@ describe.skipIf(!hasEnv)('SupabaseArtifactRepository (integration)', () => {
   afterAll(async () => {
     // Remove every row this run created.
     await db.from('artifacts').delete().like('slug', `${RUN}-%`);
-    if (createdUserId) {
-      await db.auth.admin.deleteUser(createdUserId);
+    for (const id of createdUserIds) {
+      await db.auth.admin.deleteUser(id);
     }
   });
 
@@ -126,10 +126,51 @@ describe.skipIf(!hasEnv)('SupabaseArtifactRepository (integration)', () => {
       email, password: randomUUID(), email_confirm: true,
     });
     expect(error).toBeNull();
-    createdUserId = data.user!.id;
+    const createdUserId = data.user!.id;
+    createdUserIds.push(createdUserId);
 
     await repo.insert(newArtifact('owned', { ownerId: createdUserId, expiresAt: FUTURE }));
     expect(await repo.countLiveByOwner(createdUserId, new Date())).toBe(1);
+  });
+
+  it('lists an owner’s live artifacts as summaries (newest first, no content), excluding expired and other owners', async () => {
+    const mk = async (suffix: string) => {
+      const { data, error } = await db.auth.admin.createUser({
+        email: `it-${suffix}-${RUN}@example.com`, password: randomUUID(), email_confirm: true,
+      });
+      expect(error).toBeNull();
+      const id = data.user!.id;
+      createdUserIds.push(id);
+      return id;
+    };
+    const ownerId = await mk('list');
+    const otherId = await mk('list-other');
+
+    await repo.insert(newArtifact('list-a', { ownerId, title: 'A', expiresAt: FUTURE }));
+    await repo.insert(newArtifact('list-b', { ownerId, title: 'B', expiresAt: FUTURE }));
+    await repo.insert(newArtifact('list-exp', { ownerId, title: 'Expired', expiresAt: PAST }));
+    await repo.insert(newArtifact('list-other', { ownerId: otherId, title: 'Other', expiresAt: FUTURE }));
+
+    const list = await repo.listByOwner(ownerId, new Date());
+    expect(list.map((s) => s.slug)).toEqual([`${RUN}-list-b`, `${RUN}-list-a`]); // newest first; excludes expired + other owner
+    expect(list[0]).not.toHaveProperty('content');
+    expect(list[0].title).toBe('B');
+    expect(list[0].viewCount).toBe(0);
+  });
+
+  it('deletes an artifact only for its owner', async () => {
+    const { data, error } = await db.auth.admin.createUser({
+      email: `it-del-${RUN}@example.com`, password: randomUUID(), email_confirm: true,
+    });
+    expect(error).toBeNull();
+    const ownerId = data.user!.id;
+    createdUserIds.push(ownerId);
+
+    await repo.insert(newArtifact('del', { ownerId, expiresAt: FUTURE }));
+    expect(await repo.deleteOwned(`${RUN}-del`, randomUUID())).toBe(false); // wrong owner — untouched
+    expect(await repo.findBySlug(`${RUN}-del`)).not.toBeNull();
+    expect(await repo.deleteOwned(`${RUN}-del`, ownerId)).toBe(true);
+    expect(await repo.findBySlug(`${RUN}-del`)).toBeNull();
   });
 
   it('deletes expired rows (global sweep) and returns a count', async () => {
