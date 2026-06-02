@@ -18,11 +18,11 @@ describe('deployErrorMessage', () => {
 
 describe('humanizeExpiry', () => {
   const now = new Date('2026-06-02T00:00:00Z');
-  it('renders hours under 48h', () => {
+  it('renders hours under 24h', () => {
     expect(humanizeExpiry('2026-06-02T01:00:00Z', now)).toBe('Expires in 1 hour');
     expect(humanizeExpiry('2026-06-02T05:00:00Z', now)).toBe('Expires in 5 hours');
   });
-  it('renders days at/over 48h', () => {
+  it('renders days at/over 24h', () => {
     expect(humanizeExpiry('2026-06-09T00:00:00Z', now)).toBe('Expires in 7 days');
     expect(humanizeExpiry('2026-06-03T00:00:00Z', now)).toBe('Expires in 1 day');
   });
