@@ -32,7 +32,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${lora.variable} ${mono.variable}`}>
-      <body>{children}</body>
+      {/* suppressHydrationWarning: some browser extensions (e.g. ColorZilla adds
+          cz-shortcut-listen) mutate <body> before hydration; this silences only
+          that attribute-level diff, not mismatches inside the app. */}
+      <body suppressHydrationWarning>{children}</body>
     </html>
   );
 }
