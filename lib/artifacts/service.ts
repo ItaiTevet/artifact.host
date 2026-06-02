@@ -1,4 +1,4 @@
-import type { ArtifactRecord, AuthContext, Ttl, Visibility } from '@/lib/artifacts/types';
+import type { ArtifactRecord, ArtifactSummary, AuthContext, Ttl, Visibility } from '@/lib/artifacts/types';
 import type { ArtifactRepository } from '@/lib/artifacts/repository';
 import { ServiceError } from '@/lib/artifacts/errors';
 import { validateSize } from '@/lib/artifacts/validate';
@@ -217,4 +217,45 @@ export async function checkPassword(
   if (!record || record.expiresAt <= deps.now()) return false;
   if (record.visibility !== 'password' || !record.passwordHash) return false;
   return verifyPassword(password, record.passwordHash);
+}
+
+// ── Dashboard (owner-scoped) ──────────────────────────────────────────────────
+
+export async function listOwnArtifacts(
+  repo: ArtifactRepository,
+  ownerId: string,
+  deps: ServiceDeps = defaultDeps,
+): Promise<ArtifactSummary[]> {
+  return repo.listByOwner(ownerId, deps.now());
+}
+
+/** Full record for the editor; not_found if missing/expired, forbidden if not the owner. */
+export async function getOwnArtifact(
+  repo: ArtifactRepository,
+  slug: string,
+  ownerId: string,
+  deps: ServiceDeps = defaultDeps,
+): Promise<ArtifactRecord> {
+  const record = await repo.findBySlug(slug);
+  if (!record || record.expiresAt <= deps.now()) {
+    throw new ServiceError('not_found', 'Artifact not found');
+  }
+  if (record.ownerId !== ownerId) {
+    throw new ServiceError('forbidden', 'Not authorized to view this artifact');
+  }
+  return record;
+}
+
+export async function deleteArtifact(
+  repo: ArtifactRepository,
+  slug: string,
+  ownerId: string,
+): Promise<{ ok: true }> {
+  const record = await repo.findBySlug(slug);
+  if (!record) throw new ServiceError('not_found', 'Artifact not found');
+  if (record.ownerId !== ownerId) {
+    throw new ServiceError('forbidden', 'Not authorized to delete this artifact');
+  }
+  await repo.deleteOwned(slug, ownerId);
+  return { ok: true };
 }
