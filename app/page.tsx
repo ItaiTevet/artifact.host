@@ -1,6 +1,7 @@
 import { Header } from '@/components/site/Header';
 import { Footer } from '@/components/site/Footer';
 import { ConnectPicker } from '@/components/home/ConnectPicker';
+import { DeployPanel } from '@/components/home/DeployPanel';
 import styles from './home.module.css';
 
 export default function Home() {
@@ -15,7 +16,12 @@ export default function Home() {
           </p>
         </div>
         <ConnectPicker mcpUrl={`${process.env.APP_BASE_URL ?? 'http://localhost:3000'}/mcp`} />
-        {/* DEPLOY_PANEL_SLOT (Task 6) */}
+        <div className={styles.divider}>
+          <div className={styles.dividerLine} />
+          <div className={styles.dividerText}>or paste HTML to try it</div>
+          <div className={styles.dividerLine} />
+        </div>
+        <DeployPanel />
       </main>
       <Footer />
     </>
