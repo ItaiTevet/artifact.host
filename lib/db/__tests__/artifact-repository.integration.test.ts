@@ -147,6 +147,7 @@ describe.skipIf(!hasEnv)('SupabaseArtifactRepository (integration)', () => {
     const otherId = await mk('list-other');
 
     await repo.insert(newArtifact('list-a', { ownerId, title: 'A', expiresAt: FUTURE }));
+    await new Promise((r) => setTimeout(r, 10)); // guarantee list-b has a strictly later created_at (deterministic ordering)
     await repo.insert(newArtifact('list-b', { ownerId, title: 'B', expiresAt: FUTURE }));
     await repo.insert(newArtifact('list-exp', { ownerId, title: 'Expired', expiresAt: PAST }));
     await repo.insert(newArtifact('list-other', { ownerId: otherId, title: 'Other', expiresAt: FUTURE }));
