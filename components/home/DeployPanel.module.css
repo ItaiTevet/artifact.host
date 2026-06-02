@@ -1,0 +1,24 @@
+.wrap { width: 100%; max-width: 620px; }
+.box { background: var(--bg-2); border: 1px solid var(--rule); border-radius: 3px; position: relative; margin-bottom: 13px; }
+.box:focus-within { border-color: var(--ink-2); }
+.textarea {
+  display: block; width: 100%; height: 140px; background: transparent; border: none; outline: none;
+  resize: vertical; font-family: var(--mono); font-size: 13px; font-weight: 300; color: var(--ink);
+  padding: 15px 16px; line-height: 1.7; caret-color: var(--amber);
+}
+.textarea::placeholder { color: var(--ink-3); }
+.hint { position: absolute; bottom: 11px; right: 11px; font-size: 11px; color: var(--ink-3); background: var(--bg); border: 1px solid var(--rule); border-radius: 2px; padding: 3px 9px; pointer-events: none; }
+.opts { display: flex; align-items: center; gap: 7px; margin-bottom: 16px; flex-wrap: wrap; }
+.pill { font-family: var(--mono); font-size: 12px; color: var(--ink-2); border: 1px solid var(--rule); border-radius: 999px; padding: 5px 14px; cursor: pointer; background: transparent; }
+.pill:hover { border-color: var(--ink-2); color: var(--ink); }
+.on { border-color: var(--ink); color: var(--ink); background: var(--bg-2); }
+.optDiv { width: 1px; height: 16px; background: var(--rule); margin: 0 2px; }
+.password { width: 100%; font-family: var(--mono); font-size: 13px; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 3px; background: var(--bg-2); margin-bottom: 16px; outline: none; }
+.password:focus { border-color: var(--ink-2); }
+.error { font-size: 12px; color: #b00020; margin-bottom: 14px; }
+.deployRow { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.deploy { font-family: var(--serif); font-style: italic; font-weight: 600; font-size: 16px; color: var(--bg); background: var(--ink); border: none; border-radius: 3px; padding: 12px 28px; cursor: pointer; display: flex; align-items: center; gap: 9px; }
+.deploy:hover { background: #26211c; }
+.deploy:disabled { opacity: .6; cursor: default; }
+.arr { font-family: var(--mono); font-style: normal; font-weight: 300; font-size: 13px; }
+.deployMeta { font-size: 11px; font-weight: 300; color: var(--ink-3); line-height: 1.8; }

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { getServiceClient } from '@/lib/db/supabase';
@@ -8,6 +9,15 @@ import { PasswordForm } from './PasswordForm';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  return {
+    robots: { index: false, follow: false },
+    openGraph: { images: [`/a/${slug}/opengraph-image`] },
+    twitter: { card: 'summary_large_image', images: [`/a/${slug}/opengraph-image`] },
+  };
+}
 
 export default async function Page({
   params, searchParams,

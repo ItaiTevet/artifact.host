@@ -1,12 +1,16 @@
 # Session Handoff — artifact.host
 
-**Last updated:** 2026-06-02 (session 4)
+**Last updated:** 2026-06-02 (session 5)
 
 ## Resume point
 
-- **On `main`.** Plan 2 (anonymous MCP endpoint) and **Plan 2b Part A (MCP OAuth code)** are both merged to local `main`.
+- **Plan 3a (public web UI) is DONE on branch `feat/web-ui-public`** (not yet merged to `main` — see the Plan 3a block below). Plan 2 (anonymous MCP endpoint) and **Plan 2b Part A (MCP OAuth code)** are merged to local `main`.
 - **Nothing is pushed to `origin`** (kept intentionally local). The work exists only in this working copy.
-- **Next unstarted work:** brainstorming → spec → plan → build **Plan 3 (Web UI)**. The Plan 2b **go-live ops** (below) were intentionally deferred to a single batch after the web UI code lands.
+- **Next unstarted work:** merge `feat/web-ui-public` → `main`, then **Plan 3b (sign-in + dashboard)**. The Plan 2b **go-live ops** (below) remain deferred to a single batch (the Plan 3b auth work shares that same Supabase Google/GitHub setup).
+
+## Plan 3a (public web UI) — DONE (branch `feat/web-ui-public`)
+
+Branded shell (Lora + JetBrains Mono via `next/font`, brand tokens in `app/globals.css`), homepage (connect-your-AI platform picker + anonymous paste-deploy with inline result card), `/docs` (MCP tools + REST API reference), branded OG cards (`next/og`, with missing/expired fallback) + client-side QR, reskinned viewer password gate + branded `not-found`. Deploys via the existing `POST /api/deploy` (no business logic added in the UI). Auth header links (`dashboard`/`sign in`) render but are **inert** (wired in Plan 3b). New deps: `qrcode` (+ `@types/qrcode`), dev `@testing-library/react` + `jsdom`. Component-test infra: `vitest.config.ts` now globs `**/*.test.{ts,tsx}` and uses `pool: 'forks'` + `--experimental-require-module` (needed for jsdom under Node 22.11; remove once Node ≥ 22.12). Plan: `docs/superpowers/plans/2026-06-02-web-ui-public.md`; spec: `docs/superpowers/specs/2026-06-02-web-ui-public-design.md`. **107/107 tests pass, tsc clean, build clean**; live smoke (prod build): `/`→200, `/docs`→200, missing slug→404, OG→`image/png`. Subagent-driven (Opus implementers + review). **Carried-over manual audit (not blocking):** eyeball the ~390px mobile header, `:focus-visible` rings, and the `⌘↵`/`Ctrl+↵` deploy shortcut against the mockup in a browser.
 
 ## Plan 2b status — code DONE, live setup DEFERRED
 

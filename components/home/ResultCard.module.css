@@ -1,0 +1,14 @@
+.card { width: 100%; max-width: 620px; background: var(--bg-2); border: 1px solid var(--rule); border-radius: 4px; padding: 22px; }
+.row { display: flex; align-items: center; gap: 10px; }
+.url { font-size: 14px; color: var(--amber); overflow-wrap: anywhere; }
+.copy { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-2); border: 1px solid var(--rule); background: var(--bg); border-radius: 2px; padding: 4px 10px; cursor: pointer; white-space: nowrap; }
+.copy:hover { border-color: var(--ink-2); color: var(--ink); }
+.token { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--rule); }
+.tokenLabel { font-size: 11px; letter-spacing: .04em; color: var(--amber); margin-bottom: 8px; }
+.tokenValue { font-size: 13px; color: var(--ink); overflow-wrap: anywhere; }
+.meta { margin-top: 14px; font-size: 11px; color: var(--ink-3); letter-spacing: .02em; }
+.qr { margin-top: 16px; }
+.actions { display: flex; align-items: center; gap: 18px; margin-top: 18px; }
+.view { font-family: var(--serif); font-style: italic; font-size: 15px; color: var(--ink); }
+.again { font-family: var(--mono); font-size: 12px; color: var(--ink-2); background: none; border: none; cursor: pointer; }
+.again:hover { color: var(--ink); }
