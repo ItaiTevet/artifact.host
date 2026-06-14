@@ -54,13 +54,12 @@ textarea:
 - Keep paste as the default; this is an additional input mode, not a replacement.
 
 ### 6. Homepage "look and feel" video illustration
-The real artifact.host experience happens inside the AI platform (agent calls the MCP
-tool, gets back a live link), which the marketing homepage can't currently convey.
-Add a short, polished motion illustration of the agent + MCP flow:
-- E.g. a Hyperframe-style animated sequence: user asks the AI → agent calls
-  `deploy_html` → live URL appears → page renders.
-- Goal is to communicate the end-to-end feel without making the visitor leave for an
-  AI client.
+Convey the core artifact.host experience — turn HTML into a live link in seconds — which
+the static marketing homepage can't currently show. Add a short, polished motion
+illustration of the deploy flow:
+- E.g. a Hyperframe-style animated sequence: paste HTML (or run `artifact deploy`) →
+  live URL appears → page renders.
+- Goal is to communicate the end-to-end feel quickly on the landing page.
 - Evaluate tooling (Hyperframe / Rive / Lottie / screen-capture) and keep it
   lightweight (lazy-loaded, accessible fallback).
 
@@ -68,6 +67,6 @@ Add a short, polished motion illustration of the agent + MCP flow:
 Today an artifact's `title` is auto-parsed from the HTML `<title>` tag (used for the
 OG card and the dashboard list). Let users set or override it explicitly:
 - An optional `title` field on the deploy panel and the dashboard edit page.
-- An optional `title` parameter on the `deploy_html` / `update_html` MCP tools.
+- An optional `title` parameter on the CLI `deploy` / `update` commands and the REST API.
 - Fall back to the parsed `<title>` (then a generic default) when none is given.
 - Drives the OG card heading and the dashboard list label.

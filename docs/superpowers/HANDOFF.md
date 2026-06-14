@@ -1,5 +1,12 @@
 # Session Handoff — artifact.host
 
+> **HISTORICAL (superseded).** As of the self-hosting / open-source work, the **MCP endpoint
+> has been removed entirely** (code, routes, OAuth consent flow, and docs) in favor of a CLI
+> and the REST API. Sections below that describe the `/mcp` endpoint, `withMcpAuth`,
+> `/.well-known/oauth-protected-resource`, `/oauth/consent`, or files under `lib/mcp/` /
+> `docs/mcp-connect.md` are kept only as a record of prior work and no longer reflect the
+> codebase. See `docs/superpowers/plans/` for the current self-hosting plan.
+
 **Last updated:** 2026-06-02 (session 6)
 
 ## Resume point

@@ -10,10 +10,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.26.0",
     "@supabase/supabase-js": "^2.106.2",
     "jose": "^6.2.3",
-    "mcp-handler": "^1.1.0",
     "nanoid": "^5.1.11",
     "next": "16.2.7",
     "qrcode": "^1.5.4",

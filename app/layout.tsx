@@ -21,10 +21,10 @@ const base = process.env.APP_BASE_URL ?? 'http://localhost:3000';
 export const metadata: Metadata = {
   metadataBase: new URL(base),
   title: 'artifact.host — Share what your AI built',
-  description: 'Paste your AI’s HTML, get a live link. One MCP call. Expires when you want.',
+  description: 'Paste your AI’s HTML or push it from the CLI, get a live link. Expires when you want.',
   openGraph: {
     title: 'artifact.host',
-    description: 'Share what your AI built. One tool call from your agent.',
+    description: 'Share what your AI built. Paste HTML or push from the CLI.',
     type: 'website',
   },
 };
