@@ -53,7 +53,10 @@ export function DashboardClient() {
 
   return (
     <div className={styles.wrap}>
-      <h1 className={styles.h1}>Your artifacts</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <h1 className={styles.h1}>Your artifacts</h1>
+        <a href="/dashboard/tokens" style={{ color: 'var(--amber)', fontSize: 14 }}>API tokens →</a>
+      </div>
       {state.items.length === 0 ? (
         <p className={styles.empty}>Nothing here yet. Deploy one from the <a href="/">home page</a> or your AI assistant, while signed in.</p>
       ) : (
