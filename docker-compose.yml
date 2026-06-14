@@ -1,0 +1,39 @@
+# Self-host artifact.host with one command:  docker compose up -d
+# Set AUTH_SECRET / COOKIE_SECRET / CRON_SECRET in a .env file first (see .env.example).
+services:
+  app:
+    build:
+      context: .
+    image: artifact-host
+    ports:
+      - "3000:3000"
+    environment:
+      DB_DRIVER: sqlite
+      AUTH_PROVIDER: local-password
+      SQLITE_PATH: /data/artifacts.db
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3000}
+      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in .env (openssl rand -hex 32)}
+      COOKIE_SECRET: ${COOKIE_SECRET:?set COOKIE_SECRET in .env (openssl rand -hex 32)}
+      CRON_SECRET: ${CRON_SECRET:-}
+    volumes:
+      - artifact-data:/data
+    restart: unless-stopped
+
+  # Optional: prune expired artifacts daily by pinging the cron endpoint.
+  # Requires CRON_SECRET to be set. Remove this block if you'd rather use a host cron.
+  expirer:
+    image: curlimages/curl:latest
+    depends_on: [app]
+    restart: unless-stopped
+    entrypoint: ["sh", "-c"]
+    command:
+      - >
+        while true; do
+          sleep 86400;
+          curl -fsS -H "Authorization: Bearer $${CRON_SECRET}" http://app:3000/api/cron/expire || true;
+        done
+    environment:
+      CRON_SECRET: ${CRON_SECRET:-}
+
+volumes:
+  artifact-data:

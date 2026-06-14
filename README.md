@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# artifact.host
 
-## Getting Started
+Share what your AI built. Turn an HTML file into a live, shareable URL in seconds — paste it
+in the browser or push it from the CLI. Nothing to install for viewers.
 
-First, run the development server:
+- **Hosted:** [artifact.host](https://artifact.host)
+- **Self-hostable:** one container, SQLite, local accounts — no external services required.
+
+## CLI
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npx artifact-host auth login          # sign in via the browser
+npx artifact-host deploy ./index.html # → prints the live URL
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Point it at your own instance with `--host https://artifacts.your-co.com` (or
+`ARTIFACT_HOST_URL`). See [`cli/README.md`](cli/README.md) for all commands.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Self-hosting
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The default profile needs **no external services**: a single container with an embedded
+SQLite database and email/password accounts.
 
-## Learn More
+```bash
+cp .env.example .env
+# set AUTH_SECRET, COOKIE_SECRET, CRON_SECRET — e.g. openssl rand -hex 32
+docker compose up -d
+```
 
-To learn more about Next.js, take a look at the following resources:
+Open `http://localhost:3000`, create an account on `/dashboard`, then connect the CLI:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npx artifact-host auth login --host http://localhost:3000
+npx artifact-host deploy ./index.html --host http://localhost:3000
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The SQLite database lives in the `artifact-data` volume. To prune expired artifacts, the
+bundled `expirer` sidecar pings `/api/cron/expire` daily (or run it from a host cron).
 
-## Deploy on Vercel
+### Authentication options
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Pick a provider with `AUTH_PROVIDER`:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Provider | Use case | Needs |
+| --- | --- | --- |
+| `local-password` *(default)* | Self-host, simplest | `AUTH_SECRET` |
+| `supabase` | The hosted cloud build | Supabase project |
+| `oidc` *(planned)* | Company SSO — e.g. **Google Workspace**, Okta, Keycloak | OIDC client + `ALLOWED_EMAIL_DOMAINS` |
+
+**Company Google (GSuite) — coming next.** The `oidc` provider will let you set
+`AUTH_PROVIDER=oidc`, `OIDC_ISSUER=https://accounts.google.com`, your Google OAuth client
+id/secret, and `ALLOWED_EMAIL_DOMAINS=intezer.com` so only verified `@intezer.com` accounts
+can sign in — with the instance acting only as an OIDC *relying party* (no OAuth server of its
+own). The config surface is stubbed in `.env.example`; the provider itself is the next step.
+
+### Database options
+
+`DB_DRIVER=sqlite` (default, embedded file) or `DB_DRIVER=supabase` (Postgres via Supabase).
+See [`.env.example`](.env.example) for the full configuration surface.
+
+## Development
+
+```bash
+npm install
+npm run dev     # http://localhost:3000
+npm test        # vitest (no credentials needed — uses in-memory + SQLite)
+```
+
+Architecture notes: the core service (`lib/artifacts/service.ts`) is persistence-agnostic
+behind `ArtifactRepository`; `lib/db/factory.ts` selects the driver; auth is pluggable behind
+`AUTH_PROVIDER`. Programmatic deploys use the REST API (`/api/deploy`, `/api/artifacts/*`),
+which the CLI wraps.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
