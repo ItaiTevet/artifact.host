@@ -2,6 +2,7 @@ import { getServiceClient } from '@/lib/db/supabase';
 import { SupabaseArtifactRepository } from '@/lib/db/artifact-repository';
 import { deployArtifact } from '@/lib/artifacts/service';
 import { getIpHash } from '@/lib/http/request-context';
+import { ownerIdFromRequest } from '@/lib/http/request-auth';
 import { errorResponse } from '@/lib/http/errors';
 
 export const runtime = 'nodejs';
@@ -12,13 +13,15 @@ export async function POST(req: Request) {
     if (typeof body?.content !== 'string') {
       return Response.json({ error: 'invalid_visibility', message: 'content (string) is required' }, { status: 400 });
     }
+    // Claim ownership when a session JWT or Personal API Token is presented; else anonymous.
+    const ownerId = await ownerIdFromRequest(req);
     const repo = new SupabaseArtifactRepository(getServiceClient());
     const result = await deployArtifact(repo, {
       content: body.content,
       visibility: body.visibility,
       password: body.password ?? null,
       ttl: body.ttl,
-      ownerId: null, // auth wiring arrives in Plan 2/3
+      ownerId,
       ipHash: getIpHash(req),
     });
     return Response.json({
