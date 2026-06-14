@@ -14,6 +14,23 @@ export default function DocsPage() {
           fully supported via a one-time edit token; no account required.
         </p>
 
+        <h2 className={styles.h2}>CLI</h2>
+        <p className={styles.p}>
+          No install required — run it with <span className={styles.tag}>npx</span>. Sign in once (opens your
+          browser), then deploy any HTML file:
+        </p>
+        <code className={styles.code}>{`npx artifact-host auth login
+npx artifact-host deploy ./index.html --ttl 7d
+
+# self-hosted instance:
+npx artifact-host auth login --host https://artifacts.your-co.com
+npx artifact-host deploy ./index.html --host https://artifacts.your-co.com`}</code>
+        <p className={styles.p}>
+          Other commands: <span className={styles.tag}>list</span>, <span className={styles.tag}>update &lt;slug&gt; &lt;file&gt;</span>,
+          <span className={styles.tag}>visibility &lt;slug&gt; public|password</span>, <span className={styles.tag}>delete &lt;slug&gt;</span>.
+          In CI, skip the browser with <span className={styles.tag}>ARTIFACT_HOST_TOKEN</span>.
+        </p>
+
         <h2 className={styles.h2}>REST API</h2>
         <p className={styles.p}><strong>POST /api/deploy</strong> — create an artifact. Body:</p>
         <code className={styles.code}>{`{

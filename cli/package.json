@@ -1,0 +1,17 @@
+{
+  "name": "artifact-host",
+  "version": "0.1.0",
+  "description": "Deploy HTML artifacts to artifact.host (or your self-hosted instance) from the command line.",
+  "type": "module",
+  "bin": {
+    "artifact": "bin/artifact.js"
+  },
+  "files": [
+    "bin",
+    "src"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}
