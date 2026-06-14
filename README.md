@@ -55,8 +55,14 @@ Code + PKCE) — it never runs its own OAuth server. Set the Google OAuth client
 
 ### Database options
 
-`DB_DRIVER=sqlite` (default, embedded file) or `DB_DRIVER=supabase` (Postgres via Supabase).
-See [`.env.example`](.env.example) for the full configuration surface.
+| `DB_DRIVER` | Storage |
+| --- | --- |
+| `sqlite` *(default)* | Embedded file (`SQLITE_PATH`) — simplest, single container |
+| `postgres` | Your own Postgres via `DATABASE_URL` — scale-up, multiple app instances |
+| `supabase` | The hosted cloud build |
+
+The schema is bootstrapped automatically on first run for `sqlite`/`postgres`. See
+[`.env.example`](.env.example) for the full configuration surface.
 
 ## Development
 

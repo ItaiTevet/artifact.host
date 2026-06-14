@@ -5,22 +5,29 @@ import { getServiceClient } from '@/lib/db/supabase';
 import { SupabaseArtifactRepository } from '@/lib/db/artifact-repository';
 import { SupabaseTokenRepository } from '@/lib/db/token-repository';
 
-/** 'supabase' (cloud, default) or 'sqlite' (self-host). */
-function isSqlite(): boolean {
-  return (process.env.DB_DRIVER ?? 'supabase') === 'sqlite';
+type Driver = 'supabase' | 'sqlite' | 'postgres';
+
+/** 'supabase' (cloud, default), or 'sqlite' / 'postgres' (self-host). */
+function driver(): Driver {
+  return (process.env.DB_DRIVER as Driver) ?? 'supabase';
 }
 
 let artifactRepo: ArtifactRepository | null = null;
 let tokenRepo: TokenRepository | null = null;
+let userRepo: UserRepository | null = null;
 
-// The SQLite modules (and the native better-sqlite3 addon) are imported lazily and only
-// when selected, so the Supabase/cloud deployment never loads the native binary.
+// SQL driver modules (and the native better-sqlite3 / pg deps) are imported lazily and only
+// when selected, so the Supabase/cloud deployment never loads them.
 export async function getArtifactRepository(): Promise<ArtifactRepository> {
   if (artifactRepo) return artifactRepo;
-  if (isSqlite()) {
+  if (driver() === 'sqlite') {
     const { getSqliteDb } = await import('./sqlite');
     const { SqliteArtifactRepository } = await import('./sqlite-artifact-repository');
     artifactRepo = new SqliteArtifactRepository(getSqliteDb());
+  } else if (driver() === 'postgres') {
+    const { ensurePgSchema } = await import('./postgres');
+    const { PgArtifactRepository } = await import('./pg-artifact-repository');
+    artifactRepo = new PgArtifactRepository(await ensurePgSchema());
   } else {
     artifactRepo = new SupabaseArtifactRepository(getServiceClient());
   }
@@ -29,26 +36,33 @@ export async function getArtifactRepository(): Promise<ArtifactRepository> {
 
 export async function getTokenRepository(): Promise<TokenRepository> {
   if (tokenRepo) return tokenRepo;
-  if (isSqlite()) {
+  if (driver() === 'sqlite') {
     const { getSqliteDb } = await import('./sqlite');
     const { SqliteTokenRepository } = await import('./sqlite-token-repository');
     tokenRepo = new SqliteTokenRepository(getSqliteDb());
+  } else if (driver() === 'postgres') {
+    const { ensurePgSchema } = await import('./postgres');
+    const { PgTokenRepository } = await import('./pg-token-repository');
+    tokenRepo = new PgTokenRepository(await ensurePgSchema());
   } else {
     tokenRepo = new SupabaseTokenRepository(getServiceClient());
   }
   return tokenRepo;
 }
 
-let userRepo: UserRepository | null = null;
-
 /** Local username/password accounts — only available on a SQL driver (self-host). */
 export async function getUserRepository(): Promise<UserRepository> {
   if (userRepo) return userRepo;
-  if (isSqlite()) {
+  if (driver() === 'sqlite') {
     const { getSqliteDb } = await import('./sqlite');
     const { SqliteUserRepository } = await import('./sqlite-user-repository');
     userRepo = new SqliteUserRepository(getSqliteDb());
-    return userRepo;
+  } else if (driver() === 'postgres') {
+    const { ensurePgSchema } = await import('./postgres');
+    const { PgUserRepository } = await import('./pg-user-repository');
+    userRepo = new PgUserRepository(await ensurePgSchema());
+  } else {
+    throw new Error('Local user accounts require DB_DRIVER=sqlite or postgres');
   }
-  throw new Error('Local user accounts require DB_DRIVER=sqlite (or another SQL driver)');
+  return userRepo;
 }
