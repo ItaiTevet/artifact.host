@@ -55,8 +55,10 @@ function verifiers() {
 }
 
 export function verifySupabaseClaims(bearerToken?: string) {
+  if (!bearerToken) return Promise.resolve(undefined); // anonymous: no JWKS needed
   return verifiers().verifyClaims(bearerToken);
 }
 export function verifySupabaseToken(bearerToken?: string) {
+  if (!bearerToken) return Promise.resolve(undefined); // anonymous: no JWKS needed
   return verifiers().verifyToken(bearerToken);
 }

@@ -13,9 +13,12 @@ Usage:
 
   artifact deploy <file.html> [--ttl 7d] [--visibility public|password] [--password PW]
   artifact list                                     List your artifacts (requires auth)
-  artifact update <slug> <file.html>                Replace an artifact's HTML (requires auth)
-  artifact visibility <slug> public|password [--password PW]
+  artifact update <slug> <file.html> [--edit-token TOKEN]   Replace an artifact's HTML
+  artifact visibility <slug> public|password [--password PW] [--edit-token TOKEN]
   artifact delete <slug>                            Delete an artifact (requires auth)
+
+  --edit-token lets you change an anonymous artifact (from its one-time deploy token)
+  without signing in. Owner commands otherwise use your saved auth.
 
 Global flags:
   --host URL     Target instance (default: ${DEFAULT_HOST}); or set ARTIFACT_HOST_URL
@@ -109,18 +112,20 @@ export async function run(argv) {
 
     case 'update': {
       const [slug, file] = rest;
-      if (!slug || !file) throw new Error('usage: artifact update <slug> <file.html>');
+      if (!slug || !file) throw new Error('usage: artifact update <slug> <file.html> [--edit-token TOKEN]');
       const { host, token } = await ctx(flags);
-      const res = await update(host, requireToken(token), slug, file);
+      const auth = flags['edit-token'] ? { editToken: flags['edit-token'] } : { token: requireToken(token) };
+      const res = await update(host, auth, slug, file);
       process.stdout.write(`${res.url}\n`);
       return;
     }
 
     case 'visibility': {
       const [slug, vis] = rest;
-      if (!slug || !vis) throw new Error('usage: artifact visibility <slug> public|password [--password PW]');
+      if (!slug || !vis) throw new Error('usage: artifact visibility <slug> public|password [--password PW] [--edit-token TOKEN]');
       const { host, token } = await ctx(flags);
-      await setVisibility(host, requireToken(token), slug, vis,
+      const auth = flags['edit-token'] ? { editToken: flags['edit-token'] } : { token: requireToken(token) };
+      await setVisibility(host, auth, slug, vis,
         typeof flags.password === 'string' ? flags.password : undefined);
       process.stdout.write(`${slug} is now ${vis}.\n`);
       return;
