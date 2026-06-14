@@ -1,8 +1,7 @@
 import { ServiceError } from '@/lib/artifacts/errors';
 import { verifySupabaseToken } from '@/lib/auth/supabase-token';
-import { getServiceClient } from '@/lib/db/supabase';
-import { SupabaseTokenRepository } from '@/lib/db/token-repository';
-import { makeVerifyPersonalToken } from '@/lib/auth/personal-token-auth';
+import { getTokenRepository } from '@/lib/db/factory';
+import { isPersonalToken, hashPersonalToken } from '@/lib/auth/personal-token';
 
 export interface OwnerAuthDeps {
   verify: (bearerToken?: string) => Promise<string | undefined>;
@@ -27,19 +26,16 @@ export function makeOwnerAuth({ verify }: OwnerAuthDeps) {
   return { ownerIdFromRequest, requireOwner };
 }
 
-// PAT verifier is built lazily so importing this module never touches the DB client
-// (keeps module load env-free; the service client is only constructed on first PAT check).
-let verifyPat: ((bearerToken?: string) => Promise<string | undefined>) | null = null;
-function getVerifyPat() {
-  if (!verifyPat) {
-    verifyPat = makeVerifyPersonalToken({ repo: new SupabaseTokenRepository(getServiceClient()) });
-  }
-  return verifyPat;
+/** Resolve a Personal API Token to its owner via the configured token repository. */
+async function verifyPersonalToken(bearerToken?: string): Promise<string | undefined> {
+  if (!isPersonalToken(bearerToken)) return undefined; // cheap pre-check before touching the DB
+  const repo = await getTokenRepository();
+  return (await repo.resolveOwner(hashPersonalToken(bearerToken), new Date())) ?? undefined;
 }
 
 /** A bearer is accepted if it's a valid session JWT OR a valid Personal API Token. */
 async function verifyOwner(bearerToken?: string): Promise<string | undefined> {
-  return (await verifySupabaseToken(bearerToken)) ?? (await getVerifyPat()(bearerToken));
+  return (await verifySupabaseToken(bearerToken)) ?? (await verifyPersonalToken(bearerToken));
 }
 
 export const { ownerIdFromRequest, requireOwner } = makeOwnerAuth({ verify: verifyOwner });

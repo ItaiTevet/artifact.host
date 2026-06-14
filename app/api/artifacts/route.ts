@@ -1,5 +1,4 @@
-import { getServiceClient } from '@/lib/db/supabase';
-import { SupabaseArtifactRepository } from '@/lib/db/artifact-repository';
+import { getArtifactRepository } from '@/lib/db/factory';
 import { listOwnArtifacts } from '@/lib/artifacts/service';
 import { requireOwner } from '@/lib/http/request-auth';
 import { errorResponse } from '@/lib/http/errors';
@@ -9,7 +8,7 @@ export const runtime = 'nodejs';
 export async function GET(req: Request) {
   try {
     const ownerId = await requireOwner(req);
-    const repo = new SupabaseArtifactRepository(getServiceClient());
+    const repo = await getArtifactRepository();
     const items = await listOwnArtifacts(repo, ownerId);
     return Response.json({
       artifacts: items.map((a) => ({

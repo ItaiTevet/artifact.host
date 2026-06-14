@@ -1,5 +1,4 @@
-import { getServiceClient } from '@/lib/db/supabase';
-import { SupabaseTokenRepository } from '@/lib/db/token-repository';
+import { getTokenRepository } from '@/lib/db/factory';
 import { requireOwner } from '@/lib/http/request-auth';
 import { generatePersonalToken, hashPersonalToken } from '@/lib/auth/personal-token';
 import { errorResponse } from '@/lib/http/errors';
@@ -10,7 +9,7 @@ export const runtime = 'nodejs';
 export async function GET(req: Request) {
   try {
     const ownerId = await requireOwner(req);
-    const repo = new SupabaseTokenRepository(getServiceClient());
+    const repo = await getTokenRepository();
     const tokens = await repo.listByOwner(ownerId);
     return Response.json({
       tokens: tokens.map((t) => ({
@@ -33,7 +32,7 @@ export async function POST(req: Request) {
     const body = await req.json().catch(() => ({}));
     const name = typeof body?.name === 'string' && body.name.trim() ? body.name.trim().slice(0, 80) : 'API token';
     const token = generatePersonalToken();
-    const repo = new SupabaseTokenRepository(getServiceClient());
+    const repo = await getTokenRepository();
     const rec = await repo.create({ ownerId, name, tokenHash: hashPersonalToken(token), expiresAt: null });
     return Response.json({
       id: rec.id,

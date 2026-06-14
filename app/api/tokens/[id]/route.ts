@@ -1,5 +1,4 @@
-import { getServiceClient } from '@/lib/db/supabase';
-import { SupabaseTokenRepository } from '@/lib/db/token-repository';
+import { getTokenRepository } from '@/lib/db/factory';
 import { requireOwner } from '@/lib/http/request-auth';
 import { ServiceError } from '@/lib/artifacts/errors';
 import { errorResponse } from '@/lib/http/errors';
@@ -11,7 +10,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
   try {
     const { id } = await params;
     const ownerId = await requireOwner(req);
-    const repo = new SupabaseTokenRepository(getServiceClient());
+    const repo = await getTokenRepository();
     const ok = await repo.revoke(id, ownerId);
     if (!ok) throw new ServiceError('not_found', 'Token not found');
     return Response.json({ ok: true });

@@ -1,5 +1,4 @@
-import { getServiceClient } from '@/lib/db/supabase';
-import { SupabaseArtifactRepository } from '@/lib/db/artifact-repository';
+import { getArtifactRepository } from '@/lib/db/factory';
 import { updateArtifact, setVisibility, getOwnArtifact, deleteArtifact } from '@/lib/artifacts/service';
 import { ownerIdFromRequest, requireOwner } from '@/lib/http/request-auth';
 import { errorResponse } from '@/lib/http/errors';
@@ -11,7 +10,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
   try {
     const { slug } = await params;
     const ownerId = await requireOwner(req);
-    const repo = new SupabaseArtifactRepository(getServiceClient());
+    const repo = await getArtifactRepository();
     const rec = await getOwnArtifact(repo, slug, ownerId);
     return Response.json({
       slug: rec.slug,
@@ -33,7 +32,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ slug: 
     const ownerId = await ownerIdFromRequest(req);
     const editToken = req.headers.get('x-edit-token') ?? body?.edit_token ?? null;
     const auth = { ownerId, editToken };
-    const repo = new SupabaseArtifactRepository(getServiceClient());
+    const repo = await getArtifactRepository();
 
     if (typeof body?.visibility === 'string') {
       await setVisibility(repo, slug, body.visibility, body.password ?? null, auth);
@@ -53,7 +52,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ slug:
   try {
     const { slug } = await params;
     const ownerId = await requireOwner(req);
-    const repo = new SupabaseArtifactRepository(getServiceClient());
+    const repo = await getArtifactRepository();
     await deleteArtifact(repo, slug, ownerId);
     return Response.json({ ok: true });
   } catch (err) {

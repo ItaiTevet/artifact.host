@@ -1,5 +1,4 @@
-import { getServiceClient } from '@/lib/db/supabase';
-import { SupabaseArtifactRepository } from '@/lib/db/artifact-repository';
+import { getArtifactRepository } from '@/lib/db/factory';
 import { deployArtifact } from '@/lib/artifacts/service';
 import { getIpHash } from '@/lib/http/request-context';
 import { ownerIdFromRequest } from '@/lib/http/request-auth';
@@ -15,7 +14,7 @@ export async function POST(req: Request) {
     }
     // Claim ownership when a session JWT or Personal API Token is presented; else anonymous.
     const ownerId = await ownerIdFromRequest(req);
-    const repo = new SupabaseArtifactRepository(getServiceClient());
+    const repo = await getArtifactRepository();
     const result = await deployArtifact(repo, {
       content: body.content,
       visibility: body.visibility,

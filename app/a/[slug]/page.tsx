@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
-import { getServiceClient } from '@/lib/db/supabase';
-import { SupabaseArtifactRepository } from '@/lib/db/artifact-repository';
+import { getArtifactRepository } from '@/lib/db/factory';
 import { viewArtifact } from '@/lib/artifacts/service';
 import { cookieName, verifyPasswordCookie } from '@/lib/http/cookies';
 import { PasswordForm } from './PasswordForm';
@@ -43,7 +42,7 @@ export default async function Page({
   const jar = await cookies();
   const passwordVerified = verifyPasswordCookie(slug, jar.get(cookieName(slug))?.value);
 
-  const repo = new SupabaseArtifactRepository(getServiceClient());
+  const repo = await getArtifactRepository();
   const res = await viewArtifact(repo, slug, { passwordVerified });
 
   if (res.status === 'not_found') notFound();

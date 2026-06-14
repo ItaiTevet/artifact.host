@@ -1,6 +1,5 @@
 import { ImageResponse } from 'next/og';
-import { getServiceClient } from '@/lib/db/supabase';
-import { SupabaseArtifactRepository } from '@/lib/db/artifact-repository';
+import { getArtifactRepository } from '@/lib/db/factory';
 
 export const runtime = 'nodejs';
 export const alt = 'artifact.host';
@@ -9,7 +8,7 @@ export const contentType = 'image/png';
 
 async function titleFor(slug: string): Promise<string | null> {
   try {
-    const repo = new SupabaseArtifactRepository(getServiceClient());
+    const repo = await getArtifactRepository();
     const rec = await repo.findBySlug(slug);
     if (!rec || rec.expiresAt <= new Date()) return null;
     return rec.title ?? null;

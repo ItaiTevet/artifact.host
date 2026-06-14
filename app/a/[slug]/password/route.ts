@@ -1,6 +1,5 @@
 import { cookies } from 'next/headers';
-import { getServiceClient } from '@/lib/db/supabase';
-import { SupabaseArtifactRepository } from '@/lib/db/artifact-repository';
+import { getArtifactRepository } from '@/lib/db/factory';
 import { checkPassword } from '@/lib/artifacts/service';
 import { cookieName, signPasswordCookie } from '@/lib/http/cookies';
 
@@ -11,7 +10,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
   const form = await req.formData();
   const password = String(form.get('password') ?? '');
 
-  const repo = new SupabaseArtifactRepository(getServiceClient());
+  const repo = await getArtifactRepository();
   const ok = await checkPassword(repo, slug, password);
 
   if (!ok) {

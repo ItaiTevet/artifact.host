@@ -1,5 +1,4 @@
-import { getServiceClient } from '@/lib/db/supabase';
-import { SupabaseArtifactRepository } from '@/lib/db/artifact-repository';
+import { getArtifactRepository } from '@/lib/db/factory';
 
 export const runtime = 'nodejs';
 
@@ -8,7 +7,7 @@ export async function GET(req: Request) {
   if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
     return new Response('Unauthorized', { status: 401 });
   }
-  const repo = new SupabaseArtifactRepository(getServiceClient());
+  const repo = await getArtifactRepository();
   const deleted = await repo.deleteExpired(new Date());
   return Response.json({ deleted });
 }

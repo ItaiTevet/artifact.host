@@ -1,10 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
 
-// Stub the data layer so the OG handler doesn't touch Supabase.
-vi.mock('@/lib/db/supabase', () => ({ getServiceClient: () => ({}) }));
+// Stub the data layer so the OG handler doesn't touch a real database.
 const findBySlug = vi.fn();
-vi.mock('@/lib/db/artifact-repository', () => ({
-  SupabaseArtifactRepository: class { findBySlug = findBySlug; },
+vi.mock('@/lib/db/factory', () => ({
+  getArtifactRepository: async () => ({ findBySlug }),
 }));
 
 import Image from '@/app/a/[slug]/opengraph-image';
