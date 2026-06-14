@@ -44,14 +44,14 @@ Pick a provider with `AUTH_PROVIDER`:
 | Provider | Use case | Needs |
 | --- | --- | --- |
 | `local-password` *(default)* | Self-host, simplest | `AUTH_SECRET` |
+| `oidc` | Company SSO — e.g. **Google Workspace**, Okta, Keycloak | OIDC client + `ALLOWED_EMAIL_DOMAINS` |
 | `supabase` | The hosted cloud build | Supabase project |
-| `oidc` *(planned)* | Company SSO — e.g. **Google Workspace**, Okta, Keycloak | OIDC client + `ALLOWED_EMAIL_DOMAINS` |
 
-**Company Google (GSuite) — coming next.** The `oidc` provider will let you set
-`AUTH_PROVIDER=oidc`, `OIDC_ISSUER=https://accounts.google.com`, your Google OAuth client
-id/secret, and `ALLOWED_EMAIL_DOMAINS=intezer.com` so only verified `@intezer.com` accounts
-can sign in — with the instance acting only as an OIDC *relying party* (no OAuth server of its
-own). The config surface is stubbed in `.env.example`; the provider itself is the next step.
+**Company Google (GSuite).** Set `AUTH_PROVIDER=oidc`, `OIDC_ISSUER=https://accounts.google.com`,
+your Google OAuth client id/secret, and `ALLOWED_EMAIL_DOMAINS=intezer.com` so only verified
+`@intezer.com` accounts can sign in. The instance is only an OIDC *relying party* (Authorization
+Code + PKCE) — it never runs its own OAuth server. Set the Google OAuth client's redirect URI to
+`<APP_BASE_URL>/api/auth/oidc/callback`.
 
 ### Database options
 

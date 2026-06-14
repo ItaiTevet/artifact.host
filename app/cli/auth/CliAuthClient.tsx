@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { getAccessToken, getAccountEmail, signInWithOAuth, isPasswordAuth } from '@/lib/web/auth';
+import { getAccessToken, getAccountEmail, signInWithOAuth, signInWithOidc, isPasswordAuth, isOidcAuth, OIDC_LABEL } from '@/lib/web/auth';
 import { PasswordSignIn } from '@/components/dashboard/PasswordSignIn';
 
 const wrap: React.CSSProperties = { fontFamily: 'system-ui', maxWidth: 460, margin: '15vh auto', padding: 24 };
@@ -81,6 +81,8 @@ export default function CliAuthClient() {
           <p>Sign in to authorize the CLI on this device.</p>
           {isPasswordAuth ? (
             <PasswordSignIn onSignedIn={() => getAccountEmail().then(setEmail)} />
+          ) : isOidcAuth ? (
+            <button style={btn} onClick={() => signInWithOidc()}>Continue with {OIDC_LABEL}</button>
           ) : (
             <>
               <button style={btn} onClick={() => signInWithOAuth('google')}>Continue with Google</button>

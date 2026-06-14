@@ -1,6 +1,6 @@
 'use client';
 
-import { signInWithOAuth, isPasswordAuth } from '@/lib/web/auth';
+import { signInWithOAuth, signInWithOidc, isPasswordAuth, isOidcAuth, OIDC_LABEL } from '@/lib/web/auth';
 import { PasswordSignIn } from './PasswordSignIn';
 import styles from './SignInGate.module.css';
 
@@ -18,6 +18,12 @@ export function SignInGate({
 
         {isPasswordAuth ? (
           <PasswordSignIn onSignedIn={onSignedIn ?? (() => window.location.reload())} />
+        ) : isOidcAuth ? (
+          <div className={styles.buttons}>
+            <button className={`${styles.btn} ${styles.github}`} onClick={() => signInWithOidc()}>
+              <span className={styles.label}>Continue with {OIDC_LABEL}</span>
+            </button>
+          </div>
         ) : (
           <div className={styles.buttons}>
             <button
