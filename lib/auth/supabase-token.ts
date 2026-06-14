@@ -32,10 +32,31 @@ export function makeVerifySupabaseToken(deps: VerifyTokenDeps) {
   };
 }
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
-const ISSUER = `${SUPABASE_URL}/auth/v1`;
-// Lazy remote JWKS (fetched on first verification, then cached by jose).
-const remoteJwks = createRemoteJWKSet(new URL(`${SUPABASE_URL}/auth/v1/.well-known/jwks.json`));
+// Verifiers are built lazily on first use, so importing this module never touches the
+// (Supabase-specific) env. A Supabase-free self-host can import the shared auth code
+// without configuring NEXT_PUBLIC_SUPABASE_URL; these are only invoked when
+// AUTH_PROVIDER=supabase.
+let cached: {
+  verifyClaims: ReturnType<typeof makeSupabaseJwtVerifier>;
+  verifyToken: ReturnType<typeof makeVerifySupabaseToken>;
+} | null = null;
 
-export const verifySupabaseClaims = makeSupabaseJwtVerifier({ jwks: remoteJwks, issuer: ISSUER });
-export const verifySupabaseToken = makeVerifySupabaseToken({ jwks: remoteJwks, issuer: ISSUER });
+function verifiers() {
+  if (cached) return cached;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!url) throw new Error('NEXT_PUBLIC_SUPABASE_URL is required for AUTH_PROVIDER=supabase');
+  const issuer = `${url}/auth/v1`;
+  const jwks = createRemoteJWKSet(new URL(`${url}/auth/v1/.well-known/jwks.json`));
+  cached = {
+    verifyClaims: makeSupabaseJwtVerifier({ jwks, issuer }),
+    verifyToken: makeVerifySupabaseToken({ jwks, issuer }),
+  };
+  return cached;
+}
+
+export function verifySupabaseClaims(bearerToken?: string) {
+  return verifiers().verifyClaims(bearerToken);
+}
+export function verifySupabaseToken(bearerToken?: string) {
+  return verifiers().verifyToken(bearerToken);
+}

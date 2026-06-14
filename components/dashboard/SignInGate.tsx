@@ -1,12 +1,14 @@
 'use client';
 
-import { signIn } from '@/lib/web/supabase-browser';
+import { signInWithOAuth, isPasswordAuth } from '@/lib/web/auth';
+import { PasswordSignIn } from './PasswordSignIn';
 import styles from './SignInGate.module.css';
 
 export function SignInGate({
   title = 'Sign in to your dashboard',
   subtitle = 'Manage the artifacts you’ve deployed while signed in.',
-}: { title?: string; subtitle?: string }) {
+  onSignedIn,
+}: { title?: string; subtitle?: string; onSignedIn?: () => void }) {
   return (
     <div className={styles.wrap}>
       <div className={styles.card}>
@@ -14,23 +16,27 @@ export function SignInGate({
         <h1 className={styles.title}>{title}</h1>
         <p className={styles.subtitle}>{subtitle}</p>
 
-        <div className={styles.buttons}>
-          <button
-            className={`${styles.btn} ${styles.google}`}
-            onClick={() => void signIn('google')}
-          >
-            <span className={styles.icon}><GoogleMark /></span>
-            <span className={styles.label}>Continue with Google</span>
-          </button>
+        {isPasswordAuth ? (
+          <PasswordSignIn onSignedIn={onSignedIn ?? (() => window.location.reload())} />
+        ) : (
+          <div className={styles.buttons}>
+            <button
+              className={`${styles.btn} ${styles.google}`}
+              onClick={() => void signInWithOAuth('google')}
+            >
+              <span className={styles.icon}><GoogleMark /></span>
+              <span className={styles.label}>Continue with Google</span>
+            </button>
 
-          <button
-            className={`${styles.btn} ${styles.github}`}
-            onClick={() => void signIn('github')}
-          >
-            <span className={styles.icon}><GitHubMark /></span>
-            <span className={styles.label}>Continue with GitHub</span>
-          </button>
-        </div>
+            <button
+              className={`${styles.btn} ${styles.github}`}
+              onClick={() => void signInWithOAuth('github')}
+            >
+              <span className={styles.icon}><GitHubMark /></span>
+              <span className={styles.label}>Continue with GitHub</span>
+            </button>
+          </div>
+        )}
 
         <p className={styles.foot}>Anonymous deploys never need an account.</p>
       </div>

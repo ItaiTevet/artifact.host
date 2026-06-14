@@ -1,5 +1,5 @@
 import { ServiceError } from '@/lib/artifacts/errors';
-import { verifySupabaseToken } from '@/lib/auth/supabase-token';
+import { verifyOwnerSession } from '@/lib/auth/server';
 import { getTokenRepository } from '@/lib/db/factory';
 import { isPersonalToken, hashPersonalToken } from '@/lib/auth/personal-token';
 
@@ -33,9 +33,9 @@ async function verifyPersonalToken(bearerToken?: string): Promise<string | undef
   return (await repo.resolveOwner(hashPersonalToken(bearerToken), new Date())) ?? undefined;
 }
 
-/** A bearer is accepted if it's a valid session JWT OR a valid Personal API Token. */
+/** A bearer is accepted if it's a valid session token OR a valid Personal API Token. */
 async function verifyOwner(bearerToken?: string): Promise<string | undefined> {
-  return (await verifySupabaseToken(bearerToken)) ?? (await verifyPersonalToken(bearerToken));
+  return (await verifyOwnerSession(bearerToken)) ?? (await verifyPersonalToken(bearerToken));
 }
 
 export const { ownerIdFromRequest, requireOwner } = makeOwnerAuth({ verify: verifyOwner });

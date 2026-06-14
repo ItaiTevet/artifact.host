@@ -3,6 +3,7 @@ import Database from 'better-sqlite3';
 import { applySchema } from '@/lib/db/sqlite';
 import { SqliteArtifactRepository } from '@/lib/db/sqlite-artifact-repository';
 import { SqliteTokenRepository } from '@/lib/db/sqlite-token-repository';
+import { SqliteUserRepository } from '@/lib/db/sqlite-user-repository';
 import { hashPersonalToken } from '@/lib/auth/personal-token';
 import type { NewArtifact } from '@/lib/artifacts/repository';
 
@@ -95,5 +96,18 @@ describe('SqliteTokenRepository', () => {
     const hash = hashPersonalToken('ah_old');
     await repo.create({ ownerId: 'u2', name: 'old', tokenHash: hash, expiresAt: new Date('2020-01-01') });
     expect(await repo.resolveOwner(hash, new Date('2026-01-01'))).toBeNull();
+  });
+});
+
+describe('SqliteUserRepository', () => {
+  it('creates, finds by email, and counts', async () => {
+    const repo = new SqliteUserRepository(freshDb());
+    expect(await repo.count()).toBe(0);
+    const u = await repo.create('a@b.com', 'hash1');
+    expect(u.id).toBeTruthy();
+    expect(u.email).toBe('a@b.com');
+    expect((await repo.findByEmail('a@b.com'))?.passwordHash).toBe('hash1');
+    expect(await repo.findByEmail('missing@b.com')).toBeNull();
+    expect(await repo.count()).toBe(1);
   });
 });

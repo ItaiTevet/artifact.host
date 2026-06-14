@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { getAccessToken, getAccountEmail, signIn } from '@/lib/web/supabase-browser';
+import { getAccessToken, getAccountEmail, signInWithOAuth, isPasswordAuth } from '@/lib/web/auth';
+import { PasswordSignIn } from '@/components/dashboard/PasswordSignIn';
 
 const wrap: React.CSSProperties = { fontFamily: 'system-ui', maxWidth: 460, margin: '15vh auto', padding: 24 };
 const btn: React.CSSProperties = {
@@ -78,8 +79,14 @@ export default function CliAuthClient() {
       ) : (
         <>
           <p>Sign in to authorize the CLI on this device.</p>
-          <button style={btn} onClick={() => signIn('google')}>Continue with Google</button>
-          <button style={btn} onClick={() => signIn('github')}>Continue with GitHub</button>
+          {isPasswordAuth ? (
+            <PasswordSignIn onSignedIn={() => getAccountEmail().then(setEmail)} />
+          ) : (
+            <>
+              <button style={btn} onClick={() => signInWithOAuth('google')}>Continue with Google</button>
+              <button style={btn} onClick={() => signInWithOAuth('github')}>Continue with GitHub</button>
+            </>
+          )}
         </>
       )}
     </main>

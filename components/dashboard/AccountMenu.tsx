@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getAccountEmail, signOut } from '@/lib/web/supabase-browser';
+import { getAccountEmail, signOut } from '@/lib/web/auth';
 import styles from './AccountMenu.module.css';
 
 export function AccountMenu() {

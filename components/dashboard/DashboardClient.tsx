@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { getAccessToken } from '@/lib/web/supabase-browser';
+import { getAccessToken } from '@/lib/web/auth';
 import type { ArtifactListItem } from '@/lib/web/dashboard';
 import { editErrorMessage } from '@/lib/web/dashboard';
 import { SignInGate } from './SignInGate';
