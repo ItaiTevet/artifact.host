@@ -6,6 +6,7 @@ import { hashPassword } from '@/lib/artifacts/tokens';
 export const runtime = 'nodejs';
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+const signupDisabled = () => process.env.DISABLE_SIGNUP === 'true' || process.env.DISABLE_SIGNUP === '1';
 
 export async function POST(req: Request) {
   if (authProvider() !== 'local-password') {
@@ -22,6 +23,11 @@ export async function POST(req: Request) {
   }
 
   const repo = await getUserRepository();
+  // When sign-up is disabled, still allow bootstrapping the very first account so the
+  // instance owner can create their admin login; everyone after that is blocked.
+  if (signupDisabled() && (await repo.count()) > 0) {
+    return Response.json({ error: 'forbidden', message: 'Sign-up is disabled on this instance' }, { status: 403 });
+  }
   if (await repo.findByEmail(email)) {
     return Response.json({ error: 'exists', message: 'An account with that email already exists' }, { status: 409 });
   }
