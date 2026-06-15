@@ -4,6 +4,7 @@ import { authProvider } from '@/lib/auth/server';
 import { oidcConfig, exchangeAndValidate, domainAllowed } from '@/lib/auth/oidc';
 import { getUserRepository } from '@/lib/db/factory';
 import { issueSession } from '@/lib/auth/session';
+import { safeReturnPath } from '@/lib/http/safe-redirect';
 
 export const runtime = 'nodejs';
 
@@ -20,8 +21,7 @@ export async function GET(req: Request) {
   const expectedState = jar.get('oidc_state')?.value;
   const nonce = jar.get('oidc_nonce')?.value;
   const verifier = jar.get('oidc_verifier')?.value;
-  let returnTo = jar.get('oidc_return')?.value || '/dashboard';
-  if (!returnTo.startsWith('/') || returnTo.startsWith('//')) returnTo = '/dashboard';
+  const returnTo = safeReturnPath(jar.get('oidc_return')?.value, origin);
 
   for (const name of TEMP_COOKIES) jar.delete({ name, path: '/api/auth/oidc' });
 

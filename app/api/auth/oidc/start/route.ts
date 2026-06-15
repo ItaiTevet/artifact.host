@@ -2,19 +2,16 @@ import { randomBytes } from 'node:crypto';
 import { cookies } from 'next/headers';
 import { authProvider } from '@/lib/auth/server';
 import { oidcConfig, pkce, buildAuthUrl } from '@/lib/auth/oidc';
+import { safeReturnPath } from '@/lib/http/safe-redirect';
 
 export const runtime = 'nodejs';
-
-/** Only allow same-site relative return paths (no open redirects). */
-function safeReturn(v: string | null): string {
-  return v && v.startsWith('/') && !v.startsWith('//') ? v : '/dashboard';
-}
 
 export async function GET(req: Request) {
   if (authProvider() !== 'oidc') return new Response('Not found', { status: 404 });
 
+  const url = new URL(req.url);
   const cfg = oidcConfig();
-  const returnTo = safeReturn(new URL(req.url).searchParams.get('returnTo'));
+  const returnTo = safeReturnPath(url.searchParams.get('returnTo'), url.origin);
   const state = randomBytes(16).toString('hex');
   const nonce = randomBytes(16).toString('hex');
   const { verifier, challenge } = pkce();
