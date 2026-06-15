@@ -68,9 +68,12 @@ The schema is bootstrapped automatically on first run for `sqlite`/`postgres`. S
 
 ```bash
 npm install
-npm run dev     # http://localhost:3000
-npm test        # vitest (no credentials needed — uses in-memory + SQLite)
+npm run dev               # http://localhost:3000
+npm test                  # vitest unit/logic (no credentials needed)
+npm run build && npm run e2e   # hermetic HTTP end-to-end (self-host mode)
 ```
+
+Testing spans both deployment modes (cloud + self-host) — see [TESTING.md](TESTING.md).
 
 Architecture notes: the core service (`lib/artifacts/service.ts`) is persistence-agnostic
 behind `ArtifactRepository`; `lib/db/factory.ts` selects the driver; auth is pluggable behind

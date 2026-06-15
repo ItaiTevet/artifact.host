@@ -17,3 +17,5 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+      # Hermetic end-to-end run in self-host mode (sqlite + local-password, ephemeral DB).
+      - run: npm run e2e

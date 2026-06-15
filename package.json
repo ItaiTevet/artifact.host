@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "e2e": "node --test --test-timeout=120000 e2e/*.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.2",
