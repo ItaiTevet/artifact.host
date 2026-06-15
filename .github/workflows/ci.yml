@@ -16,6 +16,12 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      # Build the self-host bundle once; both e2e suites run against it.
       - run: npm run build
-      # Hermetic end-to-end run in self-host mode (sqlite + local-password, ephemeral DB).
+        env:
+          NEXT_PUBLIC_AUTH_PROVIDER: local-password
+      # API-level end-to-end (self-host: sqlite + local-password, ephemeral DB).
       - run: npm run e2e
+      # Browser-level end-to-end through the real UI (catches form/auth-wiring regressions).
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e:browser

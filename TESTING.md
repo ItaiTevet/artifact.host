@@ -50,6 +50,23 @@ owner-only endpoints rejecting anonymous callers, PAT create→authenticate→re
 `restricted` sharing access matrix (owner/allowlisted-email/allowlisted-domain/denied/anon),
 and the password gate.
 
+## 2b. Browser end-to-end — `npm run e2e:browser`
+
+API tests can't catch UI-integration bugs (e.g. "the deploy form doesn't send the auth
+token, so signed-in deploys aren't owned"). The Playwright suite (`e2e-browser/`) drives the
+**real UI** through the core journeys in self-host mode: sign up → deploy from the home page →
+the artifact appears in the dashboard (owned), and an anonymous deploy renders at its URL.
+
+```bash
+# the auth provider is baked into the client bundle, so build self-host first:
+NEXT_PUBLIC_AUTH_PROVIDER=local-password npm run build
+npx playwright install chromium
+npm run e2e:browser
+```
+
+Because `DeployPanel` etc. are the same components in both modes, this self-host UI run guards
+the cloud UI too. CI runs it after the API e2e.
+
 ## 3. Cloud post-deploy smoke
 
 Run tier 2 in cloud mode against prod after a deploy (manually, or as a CI job gated on the

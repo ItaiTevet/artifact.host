@@ -37,6 +37,11 @@ yarn-error.log*
 # self-host SQLite data
 /data
 
+# playwright
+/test-results
+/playwright-report
+/e2e-browser/.cache
+
 # vercel
 .vercel
 

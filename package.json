@@ -8,7 +8,8 @@
     "start": "next start",
     "test": "vitest run",
     "test:watch": "vitest",
-    "e2e": "node --test --test-timeout=120000 e2e/*.test.mjs"
+    "e2e": "node --test --test-timeout=120000 e2e/*.test.mjs",
+    "e2e:browser": "playwright test"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.2",
@@ -23,6 +24,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@testing-library/react": "^16.3.2",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20",
