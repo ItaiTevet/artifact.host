@@ -1,4 +1,4 @@
-import type { ArtifactRecord, ArtifactSummary, Visibility } from '@/lib/artifacts/types';
+import type { ArtifactRecord, ArtifactSummary, SharePrincipal, Visibility } from '@/lib/artifacts/types';
 
 export interface NewArtifact {
   slug: string;
@@ -17,7 +17,9 @@ export interface ArtifactRepository {
   findBySlug(slug: string): Promise<ArtifactRecord | null>;
   slugExists(slug: string): Promise<boolean>;
   updateContent(slug: string, content: string, title: string | null): Promise<ArtifactRecord>;
-  updateVisibility(slug: string, visibility: Visibility, passwordHash: string | null): Promise<ArtifactRecord>;
+  updateVisibility(
+    slug: string, visibility: Visibility, passwordHash: string | null, shareAllowlist: SharePrincipal[],
+  ): Promise<ArtifactRecord>;
   incrementViews(slug: string): Promise<void>;
   listByOwner(ownerId: string, now: Date): Promise<ArtifactSummary[]>;
   deleteOwned(slug: string, ownerId: string): Promise<boolean>;

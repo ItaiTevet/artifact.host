@@ -1,6 +1,7 @@
 import { getArtifactRepository } from '@/lib/db/factory';
 import { updateArtifact, setVisibility, getOwnArtifact, deleteArtifact } from '@/lib/artifacts/service';
 import { ownerIdFromRequest, requireOwner } from '@/lib/http/request-auth';
+import { parsePrincipals, formatPrincipals } from '@/lib/artifacts/sharing';
 import { errorResponse } from '@/lib/http/errors';
 
 export const runtime = 'nodejs';
@@ -17,6 +18,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
       title: rec.title,
       content: rec.content,
       visibility: rec.visibility,
+      allowlist: formatPrincipals(rec.shareAllowlist),
       expires_at: rec.expiresAt.toISOString(),
     });
   } catch (err) {
@@ -35,7 +37,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ slug: 
     const repo = await getArtifactRepository();
 
     if (typeof body?.visibility === 'string') {
-      await setVisibility(repo, slug, body.visibility, body.password ?? null, auth);
+      const allowlist = typeof body.allowlist === 'string'
+        ? parsePrincipals(body.allowlist)
+        : Array.isArray(body.allowlist) ? body.allowlist : [];
+      await setVisibility(repo, slug, body.visibility, body.password ?? null, auth, allowlist);
       return Response.json({ ok: true });
     }
     if (typeof body?.content === 'string') {

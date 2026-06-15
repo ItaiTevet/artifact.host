@@ -1,11 +1,13 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { ArtifactRecord, ArtifactSummary, Visibility } from '@/lib/artifacts/types';
+import type { ArtifactRecord, ArtifactSummary, SharePrincipal, Visibility } from '@/lib/artifacts/types';
 import type { ArtifactRepository, NewArtifact } from '@/lib/artifacts/repository';
+import { deserializeAllowlist, serializeAllowlist } from '@/lib/artifacts/sharing';
 
 interface Row {
   id: string; slug: string; content: string; title: string | null;
   visibility: Visibility; password_hash: string | null;
   owner_id: string | null; edit_token_hash: string; deploy_ip_hash: string | null;
+  share_allowlist: string | null;
   created_at: string; expires_at: string; view_count: number;
 }
 
@@ -14,6 +16,7 @@ function toRecord(r: Row): ArtifactRecord {
     id: r.id, slug: r.slug, content: r.content, title: r.title,
     visibility: r.visibility, passwordHash: r.password_hash,
     ownerId: r.owner_id, editTokenHash: r.edit_token_hash, deployIpHash: r.deploy_ip_hash,
+    shareAllowlist: deserializeAllowlist(r.share_allowlist),
     createdAt: new Date(r.created_at), expiresAt: new Date(r.expires_at), viewCount: Number(r.view_count),
   };
 }
@@ -52,9 +55,12 @@ export class SupabaseArtifactRepository implements ArtifactRepository {
     return toRecord(data as Row);
   }
 
-  async updateVisibility(slug: string, visibility: Visibility, passwordHash: string | null): Promise<ArtifactRecord> {
+  async updateVisibility(
+    slug: string, visibility: Visibility, passwordHash: string | null, shareAllowlist: SharePrincipal[],
+  ): Promise<ArtifactRecord> {
     const { data, error } = await this.db.from('artifacts')
-      .update({ visibility, password_hash: passwordHash }).eq('slug', slug).select().single();
+      .update({ visibility, password_hash: passwordHash, share_allowlist: serializeAllowlist(shareAllowlist) })
+      .eq('slug', slug).select().single();
     if (error) throw error;
     return toRecord(data as Row);
   }

@@ -18,6 +18,7 @@ create table if not exists artifacts (
   owner_id        text,
   edit_token_hash text not null,
   deploy_ip_hash  text,
+  share_allowlist text,
   created_at      text not null,
   expires_at      text not null,
   view_count      integer not null default 0
@@ -47,6 +48,8 @@ create table if not exists users (
 
 export function applySchema(db: Database.Database): void {
   db.exec(SQLITE_SCHEMA);
+  // Idempotent upgrade for DBs created before the column existed (SQLite lacks ADD COLUMN IF NOT EXISTS).
+  try { db.exec('alter table artifacts add column share_allowlist text'); } catch { /* already present */ }
 }
 
 let db: Database.Database | null = null;

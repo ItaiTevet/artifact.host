@@ -1,5 +1,5 @@
 export type Ttl = '1h' | '1d' | '7d' | '30d';
-export type Visibility = 'public' | 'password';
+export type Visibility = 'public' | 'password' | 'restricted';
 
 export interface DeployFormState {
   content: string;

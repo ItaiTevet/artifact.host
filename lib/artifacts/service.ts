@@ -1,6 +1,9 @@
-import type { ArtifactRecord, ArtifactSummary, AuthContext, Ttl, Visibility } from '@/lib/artifacts/types';
+import type {
+  ArtifactRecord, ArtifactSummary, AuthContext, SharePrincipal, Ttl, Visibility,
+} from '@/lib/artifacts/types';
 import type { ArtifactRepository } from '@/lib/artifacts/repository';
 import { ServiceError } from '@/lib/artifacts/errors';
+import { emailAllowed } from '@/lib/artifacts/sharing';
 import { validateSize } from '@/lib/artifacts/validate';
 import { isTtl, resolveExpiry } from '@/lib/artifacts/ttl';
 import { extractTitle } from '@/lib/artifacts/html-meta';
@@ -159,12 +162,13 @@ export async function setVisibility(
   visibility: Visibility,
   password: string | null,
   auth: AuthContext,
+  allowlist: SharePrincipal[] = [],
 ): Promise<{ ok: true }> {
   const record = await repo.findBySlug(slug);
   if (!record) throw new ServiceError('not_found', 'Artifact not found');
   authorize(record, auth);
 
-  if (visibility !== 'public' && visibility !== 'password') {
+  if (visibility !== 'public' && visibility !== 'password' && visibility !== 'restricted') {
     throw new ServiceError('invalid_visibility', `Invalid visibility: ${visibility}`);
   }
   if (visibility === 'password' && !password) {
@@ -172,21 +176,26 @@ export async function setVisibility(
   }
 
   const passwordHash = visibility === 'password' ? await hashPassword(password as string) : null;
-  await repo.updateVisibility(slug, visibility, passwordHash);
+  const shareAllowlist = visibility === 'restricted' ? allowlist : [];
+  await repo.updateVisibility(slug, visibility, passwordHash, shareAllowlist);
   return { ok: true };
 }
 
 // ── View ────────────────────────────────────────────────────────────────────
 
+/** Identity of the person viewing (from a verified session), for 'restricted' artifacts. */
+export interface Viewer { ownerId: string; email?: string | null }
+
 export type ViewResult =
   | { status: 'ok'; content: string; title: string | null; viewCount: number }
   | { status: 'password_required'; title: string | null }
+  | { status: 'restricted'; title: string | null; reason: 'login' | 'denied' }
   | { status: 'not_found' };
 
 export async function viewArtifact(
   repo: ArtifactRepository,
   slug: string,
-  ctx: { passwordVerified: boolean },
+  ctx: { passwordVerified: boolean; viewer?: Viewer | null },
   deps: ServiceDeps = defaultDeps,
 ): Promise<ViewResult> {
   const record = await repo.findBySlug(slug);
@@ -195,6 +204,14 @@ export async function viewArtifact(
 
   if (record.visibility === 'password' && !ctx.passwordVerified) {
     return { status: 'password_required', title: record.title };
+  }
+
+  if (record.visibility === 'restricted') {
+    const viewer = ctx.viewer ?? null;
+    const isOwner = !!viewer && !!record.ownerId && viewer.ownerId === record.ownerId;
+    if (!isOwner && !emailAllowed(viewer?.email, record.shareAllowlist)) {
+      return { status: 'restricted', title: record.title, reason: viewer ? 'denied' : 'login' };
+    }
   }
 
   await repo.incrementViews(slug);

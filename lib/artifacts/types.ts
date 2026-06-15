@@ -1,5 +1,11 @@
-export type Visibility = 'public' | 'password';
+export type Visibility = 'public' | 'password' | 'restricted';
 export type Ttl = '1h' | '1d' | '7d' | '30d';
+
+/** A principal on a 'restricted' artifact's allowlist: a specific email or a whole domain. */
+export interface SharePrincipal {
+  value: string;            // 'alice@intezer.com' or 'intezer.com'
+  type: 'email' | 'domain';
+}
 
 export interface ArtifactRecord {
   id: string;
@@ -11,6 +17,7 @@ export interface ArtifactRecord {
   ownerId: string | null;
   editTokenHash: string;
   deployIpHash: string | null;
+  shareAllowlist: SharePrincipal[];  // only meaningful when visibility === 'restricted'
   createdAt: Date;
   expiresAt: Date;
   viewCount: number;

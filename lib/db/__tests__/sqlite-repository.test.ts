@@ -37,7 +37,7 @@ describe('SqliteArtifactRepository', () => {
   it('updates content and visibility', async () => {
     await repo.insert(base());
     await repo.updateContent('abc123', '<p>new</p>', 'New');
-    await repo.updateVisibility('abc123', 'password', 'ph');
+    await repo.updateVisibility('abc123', 'password', 'ph', []);
     const r = await repo.findBySlug('abc123');
     expect(r?.content).toBe('<p>new</p>');
     expect(r?.title).toBe('New');

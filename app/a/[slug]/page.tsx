@@ -5,6 +5,7 @@ import { getArtifactRepository } from '@/lib/db/factory';
 import { viewArtifact } from '@/lib/artifacts/service';
 import { cookieName, verifyPasswordCookie } from '@/lib/http/cookies';
 import { PasswordForm } from './PasswordForm';
+import { RestrictedGate } from './RestrictedGate';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -48,6 +49,11 @@ export default async function Page({
   if (res.status === 'not_found') notFound();
   if (res.status === 'password_required') {
     return <PasswordForm slug={slug} error={error === '1'} />;
+  }
+  // Restricted: the viewer's identity isn't available during SSR (session is a localStorage
+  // bearer, not a cookie), so a client gate fetches the content through an authorized endpoint.
+  if (res.status === 'restricted') {
+    return <RestrictedGate slug={slug} />;
   }
   // Render the raw artifact HTML as a sandboxed srcdoc iframe (isolates artifact CSS/JS).
   return (

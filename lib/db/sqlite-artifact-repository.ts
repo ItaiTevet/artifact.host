@@ -1,12 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import type Database from 'better-sqlite3';
-import type { ArtifactRecord, ArtifactSummary, Visibility } from '@/lib/artifacts/types';
+import type { ArtifactRecord, ArtifactSummary, SharePrincipal, Visibility } from '@/lib/artifacts/types';
 import type { ArtifactRepository, NewArtifact } from '@/lib/artifacts/repository';
+import { deserializeAllowlist, serializeAllowlist } from '@/lib/artifacts/sharing';
 
 interface Row {
   id: string; slug: string; content: string; title: string | null;
   visibility: string; password_hash: string | null; owner_id: string | null;
-  edit_token_hash: string; deploy_ip_hash: string | null;
+  edit_token_hash: string; deploy_ip_hash: string | null; share_allowlist: string | null;
   created_at: string; expires_at: string; view_count: number;
 }
 
@@ -15,6 +16,7 @@ function toRecord(r: Row): ArtifactRecord {
     id: r.id, slug: r.slug, content: r.content, title: r.title,
     visibility: r.visibility as Visibility, passwordHash: r.password_hash,
     ownerId: r.owner_id, editTokenHash: r.edit_token_hash, deployIpHash: r.deploy_ip_hash,
+    shareAllowlist: deserializeAllowlist(r.share_allowlist),
     createdAt: new Date(r.created_at), expiresAt: new Date(r.expires_at), viewCount: Number(r.view_count),
   };
 }
@@ -26,14 +28,14 @@ export class SqliteArtifactRepository implements ArtifactRepository {
     const row: Row = {
       id: randomUUID(), slug: rec.slug, content: rec.content, title: rec.title,
       visibility: rec.visibility, password_hash: rec.passwordHash, owner_id: rec.ownerId,
-      edit_token_hash: rec.editTokenHash, deploy_ip_hash: rec.deployIpHash,
+      edit_token_hash: rec.editTokenHash, deploy_ip_hash: rec.deployIpHash, share_allowlist: null,
       created_at: new Date().toISOString(), expires_at: rec.expiresAt.toISOString(), view_count: 0,
     };
     this.db.prepare(
       `insert into artifacts (id, slug, content, title, visibility, password_hash, owner_id,
-        edit_token_hash, deploy_ip_hash, created_at, expires_at, view_count)
+        edit_token_hash, deploy_ip_hash, share_allowlist, created_at, expires_at, view_count)
        values (@id, @slug, @content, @title, @visibility, @password_hash, @owner_id,
-        @edit_token_hash, @deploy_ip_hash, @created_at, @expires_at, @view_count)`,
+        @edit_token_hash, @deploy_ip_hash, @share_allowlist, @created_at, @expires_at, @view_count)`,
     ).run(row);
     return toRecord(row);
   }
@@ -53,9 +55,11 @@ export class SqliteArtifactRepository implements ArtifactRepository {
     return (await this.findBySlug(slug))!;
   }
 
-  async updateVisibility(slug: string, visibility: Visibility, passwordHash: string | null): Promise<ArtifactRecord> {
-    this.db.prepare('update artifacts set visibility = ?, password_hash = ? where slug = ?')
-      .run(visibility, passwordHash, slug);
+  async updateVisibility(
+    slug: string, visibility: Visibility, passwordHash: string | null, shareAllowlist: SharePrincipal[],
+  ): Promise<ArtifactRecord> {
+    this.db.prepare('update artifacts set visibility = ?, password_hash = ?, share_allowlist = ? where slug = ?')
+      .run(visibility, passwordHash, serializeAllowlist(shareAllowlist), slug);
     return (await this.findBySlug(slug))!;
   }
 

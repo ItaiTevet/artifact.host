@@ -87,10 +87,10 @@ describe.skipIf(!hasEnv)('SupabaseArtifactRepository (integration)', () => {
 
   it('sets and clears the password hash / visibility', async () => {
     await repo.insert(newArtifact('vis'));
-    const pw = await repo.updateVisibility(`${RUN}-vis`, 'password', 'deadbeef:cafe');
+    const pw = await repo.updateVisibility(`${RUN}-vis`, 'password', 'deadbeef:cafe', []);
     expect(pw.visibility).toBe('password');
     expect(pw.passwordHash).toBe('deadbeef:cafe');
-    const pub = await repo.updateVisibility(`${RUN}-vis`, 'public', null);
+    const pub = await repo.updateVisibility(`${RUN}-vis`, 'public', null, []);
     expect(pub.visibility).toBe('public');
     expect(pub.passwordHash).toBeNull();
   });

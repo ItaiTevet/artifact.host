@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { ArtifactRecord, ArtifactSummary, Visibility } from '@/lib/artifacts/types';
+import type { ArtifactRecord, ArtifactSummary, SharePrincipal, Visibility } from '@/lib/artifacts/types';
 import type { ArtifactRepository, NewArtifact } from '@/lib/artifacts/repository';
 
 export class InMemoryRepository implements ArtifactRepository {
@@ -12,6 +12,7 @@ export class InMemoryRepository implements ArtifactRepository {
       id: randomUUID(),
       createdAt: new Date(),
       viewCount: 0,
+      shareAllowlist: [],
       ...rec,
     };
     this.rows.set(rec.slug, row);
@@ -35,11 +36,14 @@ export class InMemoryRepository implements ArtifactRepository {
     return row;
   }
 
-  async updateVisibility(slug: string, visibility: Visibility, passwordHash: string | null): Promise<ArtifactRecord> {
+  async updateVisibility(
+    slug: string, visibility: Visibility, passwordHash: string | null, shareAllowlist: SharePrincipal[],
+  ): Promise<ArtifactRecord> {
     const row = this.rows.get(slug);
     if (!row) throw new Error('not found');
     row.visibility = visibility;
     row.passwordHash = passwordHash;
+    row.shareAllowlist = shareAllowlist;
     return row;
   }
 
