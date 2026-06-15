@@ -1,0 +1,70 @@
+.section {
+  width: 100%; max-width: 620px;
+  display: flex; flex-direction: column; align-items: center;
+  margin-bottom: 30px;
+}
+
+.eyebrow {
+  font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink-3); margin-bottom: 14px;
+}
+.heading {
+  font-family: var(--serif); font-style: italic; font-weight: 600;
+  font-size: clamp(22px, 3vw, 30px); line-height: 1.12; letter-spacing: -.01em;
+  text-align: center; margin-bottom: 12px;
+}
+.sub {
+  font-size: 13px; font-weight: 300; color: var(--ink-2);
+  line-height: 1.8; max-width: 430px; text-align: center; margin-bottom: 24px;
+}
+
+/* The signature element: a real terminal. The one place we spend boldness. */
+.terminal {
+  width: 100%; max-width: 540px; background: #16130f;
+  border: 1px solid #2a251e; border-radius: 12px; overflow: hidden;
+  box-shadow: 0 22px 48px -28px rgba(20, 14, 6, .6);
+  animation: rise .55s cubic-bezier(.2, .7, .2, 1) both;
+}
+@keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .terminal { animation: none; } }
+
+.termHeader {
+  display: flex; align-items: center; gap: 7px;
+  padding: 11px 14px; border-bottom: 1px solid #241f18;
+}
+.dot { width: 10px; height: 10px; border-radius: 50%; background: #38322a; }
+.termTitle { margin-left: 7px; font-size: 11px; letter-spacing: .04em; color: #6f675b; }
+.copy {
+  margin-left: auto; font-family: var(--mono); font-size: 11px; color: #8a8073;
+  background: transparent; border: 1px solid #2f2a22; border-radius: 6px;
+  padding: 3px 10px; cursor: pointer; transition: color .15s, border-color .15s;
+}
+.copy:hover { color: #ece4d8; border-color: #4a4338; }
+
+.code {
+  margin: 0; padding: 16px 18px; font-family: var(--mono); font-size: 13px;
+  line-height: 1.9; color: #ece4d8; overflow-x: auto;
+}
+.line { display: block; white-space: pre; }
+.prompt { color: #6f675b; user-select: none; }
+.pkg { color: #e0954a; }       /* the package — the warm accent */
+.sub2 { color: #cfc6b8; }
+.path { color: #9bbe8f; }
+.comment { color: #6f675b; font-style: italic; }
+.out { color: #7e8a72; }
+
+/* Compatibility strip — quiet, monochrome, disciplined. */
+.logos { margin-top: 28px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.logoRow { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 24px; }
+.logo {
+  display: flex; flex-direction: column; align-items: center; gap: 7px;
+  color: var(--ink-3); transition: color .15s ease;
+}
+.logo:hover { color: var(--ink); }
+.logo svg { width: 24px; height: 24px; display: block; }
+.logo span { font-size: 10px; letter-spacing: .04em; color: var(--ink-3); }
+.caption { font-size: 12px; color: var(--ink-3); text-align: center; max-width: 400px; line-height: 1.65; }
+
+@media (max-width: 440px) {
+  .logoRow { gap: 18px; }
+}
