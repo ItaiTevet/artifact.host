@@ -1,5 +1,5 @@
 import { CopyButton } from '@/components/ui/CopyButton';
-import { PLATFORMS } from './PlatformLogos';
+import { PLATFORMS, faviconUrl } from './PlatformLogos';
 import styles from './AgentShowcase.module.css';
 
 const COMMANDS = `npx artifact-host auth login
@@ -41,13 +41,16 @@ export function AgentShowcase() {
         <div className={styles.logoRow}>
           {PLATFORMS.map((p) => (
             <span key={p.name} className={styles.logo} title={p.name}>
-              {p.icon}
+              <span className={styles.tile}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={faviconUrl(p.domain)} alt="" width={22} height={22} className={styles.fav} />
+              </span>
               <span>{p.name}</span>
             </span>
           ))}
         </div>
         <p className={styles.caption}>
-          Runs anywhere your agent has a terminal — Claude Code, Cursor, Copilot, and more.
+          Runs anywhere your agent has a terminal — Claude, Cursor, VS Code, and more.
         </p>
       </div>
     </section>
