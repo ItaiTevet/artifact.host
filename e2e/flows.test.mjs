@@ -79,6 +79,15 @@ describe('artifact.host e2e (cloud + self-host)', () => {
     assert.equal((await content(T.ownerToken)).status, 200, 'owner can always view');
     assert.equal((await content()).status, 401, 'anonymous is prompted to sign in');
 
+    // An owner using a Personal API Token (not a browser session) must also reach their own
+    // restricted content. Cloud mode already exercises this (T.ownerToken IS a PAT); in
+    // self-host T.ownerToken is a session token, so mint a PAT explicitly. Regression guard:
+    // the content endpoint once accepted only session bearers, so owners-via-PAT got a 401.
+    if (T.mode === 'self-host') {
+      const pat = (await (await api('/api/tokens', { method: 'POST', token: T.ownerToken, body: { name: 'e2e-restricted' } })).json()).token;
+      assert.equal((await content(pat)).status, 200, 'owner via PAT can view their own restricted content');
+    }
+
     if (!T.canCreateIdentities) { t.diagnostic('cloud mode: skipping multi-identity allow/deny checks'); return; }
     assert.equal((await content(await T.signupToken('alice@allow.test'))).status, 200, 'allowlisted email');
     assert.equal((await content(await T.signupToken('bob@partner.test'))).status, 200, 'allowlisted domain');

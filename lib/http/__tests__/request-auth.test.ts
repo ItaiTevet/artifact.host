@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { makeOwnerAuth } from '@/lib/http/request-auth';
+import { makeOwnerAuth, makeViewerAuth } from '@/lib/http/request-auth';
 import { ServiceError } from '@/lib/artifacts/errors';
 
 // Fake verifier: treats "good-token" as user "owner-1", everything else as invalid.
@@ -31,5 +31,30 @@ describe('requireOwner', () => {
   it('throws ServiceError unauthorized when absent', async () => {
     await expect(requireOwner(reqWith())).rejects.toMatchObject({ code: 'unauthorized' });
     expect(ServiceError).toBeDefined();
+  });
+});
+
+describe('viewerFromRequest', () => {
+  // A session bearer carries a verified email (used for allowlist matching); a Personal API
+  // Token only resolves to its owner id (no email), which still lets owners view their own
+  // restricted artifacts via the owner bypass.
+  const identify = async (bearer?: string) =>
+    bearer === 'session' ? { userId: 'owner-1', email: 'owner@a.test' } : undefined;
+  const resolvePat = async (bearer?: string) => (bearer === 'ah_good' ? 'owner-1' : undefined);
+  const { viewerFromRequest } = makeViewerAuth({ identify, resolvePat });
+
+  it('resolves a session bearer to a viewer with email (for allowlist checks)', async () => {
+    expect(await viewerFromRequest(reqWith('Bearer session'))).toEqual({
+      ownerId: 'owner-1', email: 'owner@a.test',
+    });
+  });
+  it('resolves a Personal API Token to the owner (no email) so owners can view their own restricted artifacts', async () => {
+    expect(await viewerFromRequest(reqWith('Bearer ah_good'))).toEqual({
+      ownerId: 'owner-1', email: null,
+    });
+  });
+  it('returns null when neither a session nor a PAT is valid', async () => {
+    expect(await viewerFromRequest(reqWith())).toBeNull();
+    expect(await viewerFromRequest(reqWith('Bearer nope'))).toBeNull();
   });
 });

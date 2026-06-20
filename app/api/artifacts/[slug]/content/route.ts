@@ -1,19 +1,17 @@
 import { getArtifactRepository } from '@/lib/db/factory';
 import { viewArtifact } from '@/lib/artifacts/service';
-import { verifyIdentity } from '@/lib/auth/server';
+import { viewerFromRequest } from '@/lib/http/request-auth';
 import { errorResponse } from '@/lib/http/errors';
 
 export const runtime = 'nodejs';
 
 // Authorized content fetch for 'restricted' artifacts — the client gate calls this with the
-// viewer's session bearer; the service checks their verified email against the allowlist.
+// viewer's session bearer (email checked against the allowlist); a Personal API Token resolves
+// to its owner, so owners can always fetch their own restricted artifact via the API/CLI too.
 export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }) {
   try {
     const { slug } = await params;
-    const header = req.headers.get('authorization') ?? '';
-    const bearer = /^bearer /i.test(header) ? header.slice(7).trim() : undefined;
-    const identity = await verifyIdentity(bearer);
-    const viewer = identity ? { ownerId: identity.userId, email: identity.email } : null;
+    const viewer = await viewerFromRequest(req);
 
     const repo = await getArtifactRepository();
     const res = await viewArtifact(repo, slug, { passwordVerified: false, viewer });

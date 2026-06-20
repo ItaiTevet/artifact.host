@@ -1,5 +1,5 @@
 import { ServiceError } from '@/lib/artifacts/errors';
-import { verifyOwnerSession } from '@/lib/auth/server';
+import { verifyOwnerSession, verifyIdentity, type SessionIdentity } from '@/lib/auth/server';
 import { getTokenRepository } from '@/lib/db/factory';
 import { isPersonalToken, hashPersonalToken } from '@/lib/auth/personal-token';
 
@@ -39,3 +39,33 @@ async function verifyOwner(bearerToken?: string): Promise<string | undefined> {
 }
 
 export const { ownerIdFromRequest, requireOwner } = makeOwnerAuth({ verify: verifyOwner });
+
+// ── Viewer auth (for 'restricted' artifacts) ──────────────────────────────────
+// Restricted access is decided two ways: an allowlisted *email* (needs a verified session
+// identity) or the *owner* bypass (just an owner id). A Personal API Token carries no email,
+// but it does resolve to its owner — so an owner can always view their own restricted artifact
+// via a PAT, matching every other owner endpoint.
+
+export interface Viewer { ownerId: string; email?: string | null }
+
+export interface ViewerAuthDeps {
+  identify: (bearerToken?: string) => Promise<SessionIdentity | undefined>;
+  resolvePat: (bearerToken?: string) => Promise<string | undefined>;
+}
+
+export function makeViewerAuth({ identify, resolvePat }: ViewerAuthDeps) {
+  /** Resolve the caller to a viewer: session identity (with email) or PAT owner (no email). */
+  async function viewerFromRequest(req: Request): Promise<Viewer | null> {
+    const bearer = bearerFrom(req);
+    const id = await identify(bearer);
+    if (id) return { ownerId: id.userId, email: id.email ?? null };
+    const ownerId = await resolvePat(bearer);
+    return ownerId ? { ownerId, email: null } : null;
+  }
+  return { viewerFromRequest };
+}
+
+export const { viewerFromRequest } = makeViewerAuth({
+  identify: verifyIdentity,
+  resolvePat: verifyPersonalToken,
+});
