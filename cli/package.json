@@ -10,8 +10,33 @@
     "bin",
     "src"
   ],
+  "keywords": [
+    "artifact",
+    "deploy",
+    "html",
+    "hosting",
+    "static",
+    "share",
+    "cli",
+    "ai",
+    "agent",
+    "llm"
+  ],
+  "homepage": "https://artifact.host",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ItaiTevet/artifact.host.git",
+    "directory": "cli"
+  },
+  "bugs": {
+    "url": "https://github.com/ItaiTevet/artifact.host/issues"
+  },
+  "author": "Itai Tevet",
   "engines": {
     "node": ">=18"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
 }
