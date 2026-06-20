@@ -55,7 +55,10 @@ export async function startTarget() {
   const port = await freePort();
   const baseUrl = `http://127.0.0.1:${port}`;
   const dir = mkdtempSync(join(tmpdir(), 'ah-e2e-'));
-  const proc = spawn('npx', ['next', 'start', '-p', String(port)], {
+  // Launch Next's binary directly with the current node — cross-platform (avoids npx, which
+  // is npx.cmd on Windows and can't be spawned without a shell), with clean kill semantics.
+  const nextBin = join('node_modules', 'next', 'dist', 'bin', 'next');
+  const proc = spawn(process.execPath, [nextBin, 'start', '-p', String(port)], {
     stdio: 'ignore',
     env: {
       ...process.env,
