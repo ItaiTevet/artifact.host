@@ -7,18 +7,18 @@ this file to the local Claude Code session (or follow it yourself).
 See also [`launch-checklist.md`](./launch-checklist.md) for the parked public/irreversible items.
 
 ## Where things stand
-- All work is on branch **`claude/self-hosting-architecture-X0WK8`**; `main` (= `d34a425`) is
-  identical except this doc + the launch checklist, and is **live on prod** (`artifact.host`,
-  Vercel auto-deploys from `main`). CI is green (unit + API e2e + browser e2e).
+- Everything is on **`main`** (`19ddf2f`) — also live on prod (`artifact.host`, Vercel
+  auto-deploys from `main`). The `claude/self-hosting-architecture-X0WK8` branch is identical.
+  CI is green (unit + API e2e + browser e2e).
 - Supabase prod already has the schema changes applied (`api_tokens`, `share_allowlist`,
   widened `visibility` check, RLS enabled).
 
 ## Start the local session
+In an existing clone, just sync `main`:
 ```bash
-git clone https://github.com/ItaiTevet/artifact.host
-cd artifact.host
-git checkout claude/self-hosting-architecture-X0WK8   # has this doc + everything
-npm ci
+git checkout main
+git pull            # → 19ddf2f (or later)
+npm ci              # deps changed: better-sqlite3, pg, @playwright/test
 ```
 Prereqs: Node 22, Docker (for Task 2), an npm account (for Task 3, when you choose to publish),
 and a **fresh prod Personal API Token** (create at https://artifact.host/dashboard/tokens —
