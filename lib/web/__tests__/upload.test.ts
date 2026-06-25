@@ -23,6 +23,6 @@ describe('validateUploadFile', () => {
   it('rejects a file over the cap', () => {
     const r = validateUploadFile({ name: 'a.html', size: MAX_BYTES + 1, type: '' });
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.error).toMatch(/4\.5\s?MB|too large/i);
+    if (!r.ok) expect(r.error).toMatch(/too large \(4\.5\s?MB/i);
   });
 });
