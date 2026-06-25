@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, type KeyboardEvent } from 'react';
+import { useState, useEffect, useRef, type KeyboardEvent, type DragEvent } from 'react';
 import { validateDeployInput, type Ttl, type Visibility } from '@/lib/web/deploy';
 import { deployErrorMessage } from '@/lib/web/errors';
 import { getAccessToken, getAccountEmail } from '@/lib/web/auth';
+import { validateUploadFile } from '@/lib/web/upload';
 import { ResultCard, type DeployResult } from './ResultCard';
 import { PasswordField } from '@/components/ui/PasswordField';
 import { HtmlEditor } from '@/components/ui/HtmlEditor';
@@ -21,6 +22,34 @@ export function DeployPanel() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<DeployResult | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function loadFile(file: File | undefined) {
+    if (!file) return;
+    const check = validateUploadFile({ name: file.name, size: file.size, type: file.type });
+    if (!check.ok) { setError(check.error); return; }
+    const reader = new FileReader();
+    reader.onload = () => { setError(null); setContent(String(reader.result ?? '')); };
+    reader.onerror = () => setError("Couldn't read that file. Try again.");
+    reader.readAsText(file);
+  }
+
+  function onDrop(e: DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setDragging(false);
+    loadFile(e.dataTransfer.files?.[0]);
+  }
+
+  function onDragOver(e: DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    if (!dragging) setDragging(true);
+  }
+
+  function onDragLeave(e: DragEvent<HTMLDivElement>) {
+    // Only clear when leaving the box itself, not when moving over children.
+    if (e.currentTarget === e.target) setDragging(false);
+  }
 
   useEffect(() => { getAccountEmail().then((e) => setSignedIn(!!e)).catch(() => setSignedIn(false)); }, []);
 
@@ -76,16 +105,33 @@ export function DeployPanel() {
 
   return (
     <div className={styles.wrap}>
-      <div className={styles.box}>
+      <div
+        className={`${styles.box} ${dragging ? styles.dragging : ''}`}
+        onDrop={onDrop}
+        onDragOver={onDragOver}
+        onDragLeave={onDragLeave}
+      >
         <HtmlEditor
           variant="light"
           value={content}
           onValueChange={setContent}
           onKeyDown={onKeyDown}
-          placeholder="Paste your HTML here..."
+          placeholder="Paste your HTML — or drop a file..."
         />
         <div className={styles.hint}>⌘↵ deploy</div>
+        {dragging && <div className={styles.dropOverlay}>Drop your HTML file to load it</div>}
+        <input
+          ref={fileInputRef}
+          data-testid="upload-input"
+          type="file"
+          accept=".html,.htm,text/html"
+          className={styles.fileInput}
+          onChange={(e) => { loadFile(e.target.files?.[0]); e.target.value = ''; }}
+        />
       </div>
+      <button type="button" className={styles.browse} onClick={() => fileInputRef.current?.click()}>
+        or drop a file · browse
+      </button>
 
       <div className={styles.opts}>
         {TTLS.map((t) => (

@@ -83,4 +83,23 @@ describe('DeployPanel', () => {
     expect(fetchMock).not.toHaveBeenCalled();
     expect(screen.getByText(/Paste some HTML first/i)).toBeTruthy();
   });
+
+  it('loads a browsed .html file into the editor', async () => {
+    render(<DeployPanel />);
+    const input = screen.getByTestId('upload-input') as HTMLInputElement;
+    const file = new File(['<h1>hi</h1>'], 'page.html', { type: 'text/html' });
+    fireEvent.change(input, { target: { files: [file] } });
+    const ta = screen.getByPlaceholderText(/Paste your HTML/i) as HTMLTextAreaElement;
+    await waitFor(() => expect(ta.value).toContain('<h1>hi</h1>'));
+  });
+
+  it('rejects a non-HTML file with an error and does not load it', async () => {
+    render(<DeployPanel />);
+    const input = screen.getByTestId('upload-input') as HTMLInputElement;
+    const file = new File(['x'], 'photo.png', { type: 'image/png' });
+    fireEvent.change(input, { target: { files: [file] } });
+    await waitFor(() => expect(screen.getByText(/html file/i)).toBeTruthy());
+    const ta = screen.getByPlaceholderText(/Paste your HTML/i) as HTMLTextAreaElement;
+    expect(ta.value).toBe('');
+  });
 });
