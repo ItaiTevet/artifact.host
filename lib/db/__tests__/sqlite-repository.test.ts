@@ -4,8 +4,10 @@ import { applySchema } from '@/lib/db/sqlite';
 import { SqliteArtifactRepository } from '@/lib/db/sqlite-artifact-repository';
 import { SqliteTokenRepository } from '@/lib/db/sqlite-token-repository';
 import { SqliteUserRepository } from '@/lib/db/sqlite-user-repository';
+import { SqliteCommentRepository } from '@/lib/db/sqlite-comment-repository';
 import { hashPersonalToken } from '@/lib/auth/personal-token';
 import type { NewArtifact } from '@/lib/artifacts/repository';
+import type { Anchor } from '@/lib/artifacts/comment-types';
 
 function freshDb() {
   const db = new Database(':memory:');
@@ -131,5 +133,58 @@ describe('SqliteUserRepository', () => {
     await repo.recordAuthAttempt('ipA', now);            // recording prunes the stale row
     const since = new Date(now.getTime() - 10 * 60 * 1000);
     expect(await repo.countRecentAuthAttempts('ipA', since)).toBe(1);
+  });
+});
+
+describe('SqliteCommentRepository', () => {
+  const pin: Anchor = { kind: 'pin', x: 0.5, y: 0.25 };
+  const hl: Anchor = { kind: 'highlight', x: 0.1, y: 0.2, quote: 'hello' };
+  let db: Database.Database;
+  let artifacts: SqliteArtifactRepository;
+  let comments: SqliteCommentRepository;
+
+  beforeEach(async () => {
+    db = new Database(':memory:');
+    applySchema(db);
+    db.pragma('foreign_keys = ON'); // freshDb() doesn't set this; needed for the cascade test
+    artifacts = new SqliteArtifactRepository(db);
+    comments = new SqliteCommentRepository(db);
+    await artifacts.insert(base({ slug: 's1', ownerId: 'u1' }));
+  });
+
+  it('round-trips comments with pin + highlight anchors, resolved, and null email', async () => {
+    const a = await comments.insert({ artifactSlug: 's1', authorId: 'u1', authorEmail: 'a@x.com', body: 'first', anchor: pin });
+    const b = await comments.insert({ artifactSlug: 's1', authorId: 'u2', authorEmail: null, body: 'second', anchor: hl });
+    const list = await comments.listBySlug('s1');
+    expect(list).toHaveLength(2);
+    // Assert by id (not list index) — SQLite ms-precision created_at can tie on rapid inserts.
+    const byId = Object.fromEntries(list.map((c) => [c.id, c]));
+    expect(byId[a.id]).toMatchObject({ body: 'first', authorEmail: 'a@x.com', resolved: false, anchor: pin });
+    expect(byId[b.id]).toMatchObject({ body: 'second', authorEmail: null, anchor: hl });
+  });
+
+  it('updateBody, setResolved, findById, deleteById, deleteBySlug', async () => {
+    const c = await comments.insert({ artifactSlug: 's1', authorId: 'u1', authorEmail: null, body: 'x', anchor: pin });
+    await comments.updateBody(c.id, 'edited');
+    await comments.setResolved(c.id, true);
+    expect(await comments.findById(c.id)).toMatchObject({ body: 'edited', resolved: true });
+    expect(await comments.deleteById(c.id)).toBe(true);
+    expect(await comments.findById(c.id)).toBeNull();
+    await comments.insert({ artifactSlug: 's1', authorId: 'u1', authorEmail: null, body: 'a', anchor: pin });
+    await comments.insert({ artifactSlug: 's1', authorId: 'u1', authorEmail: null, body: 'b', anchor: pin });
+    expect(await comments.deleteBySlug('s1')).toBe(2);
+    expect(await comments.listBySlug('s1')).toEqual([]);
+  });
+
+  it('throws on updateBody/setResolved for a missing id', async () => {
+    await expect(comments.updateBody('nope', 'x')).rejects.toThrow();
+    await expect(comments.setResolved('nope', true)).rejects.toThrow();
+  });
+
+  it('cascades comment deletion when the parent artifact is deleted (FK on delete cascade)', async () => {
+    await comments.insert({ artifactSlug: 's1', authorId: 'u1', authorEmail: null, body: 'x', anchor: pin });
+    expect(await comments.listBySlug('s1')).toHaveLength(1);
+    expect(await artifacts.deleteOwned('s1', 'u1')).toBe(true);
+    expect(await comments.listBySlug('s1')).toEqual([]); // cascade removed the comment
   });
 });
