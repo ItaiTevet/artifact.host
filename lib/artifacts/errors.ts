@@ -7,7 +7,10 @@ export type ServiceErrorCode =
   | 'forbidden'
   | 'unauthorized'
   | 'rate_limited'
-  | 'live_cap_reached';
+  | 'live_cap_reached'
+  | 'comments_disabled'
+  | 'comment_too_large'
+  | 'invalid_comment';
 
 export class ServiceError extends Error {
   constructor(public code: ServiceErrorCode, message: string) {

@@ -10,6 +10,9 @@ const STATUS: Record<ServiceErrorCode, number> = {
   unauthorized: 401,
   rate_limited: 429,
   live_cap_reached: 429,
+  comments_disabled: 403,
+  comment_too_large: 413,
+  invalid_comment: 400,
 };
 
 export function errorResponse(err: unknown): Response {
