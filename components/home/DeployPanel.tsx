@@ -31,7 +31,7 @@ export function DeployPanel() {
     if (!check.ok) { setError(check.error); return; }
     const reader = new FileReader();
     reader.onload = () => { setError(null); setContent(String(reader.result ?? '')); };
-    reader.onerror = () => setError("Couldn't read that file. Try again.");
+    reader.onerror = () => setError('Couldn’t read that file. Try again.');
     reader.readAsText(file);
   }
 
