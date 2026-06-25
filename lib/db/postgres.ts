@@ -53,6 +53,18 @@ create table if not exists auth_attempts (
   created_at timestamptz not null default now()
 );
 create index if not exists auth_attempts_ip_time_idx on auth_attempts (ip_hash, created_at);
+
+create table if not exists comments (
+  id            uuid primary key default gen_random_uuid(),
+  artifact_slug text not null references artifacts(slug) on delete cascade,
+  author_id     text not null,
+  author_email  text,
+  body          text not null,
+  anchor        text not null,
+  resolved      boolean not null default false,
+  created_at    timestamptz not null default now()
+);
+create index if not exists comments_artifact_slug_idx on comments (artifact_slug);
 `;
 
 let pool: Pool | null = null;
