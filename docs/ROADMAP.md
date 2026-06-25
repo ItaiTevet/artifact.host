@@ -45,13 +45,22 @@ remove this; the domain is intrinsic to where the OAuth callback physically live
   to the custom auth domain.
 - Purely a trust/polish improvement — sign-in is fully functional without it.
 
-### 5. Upload an HTML file instead of pasting
-Let users deploy by selecting/dropping an `.html` file rather than pasting into the
-textarea:
-- File picker + drag-and-drop onto the deploy panel; read the file client-side and
-  feed it through the existing deploy path.
-- Reuse the current guardrails (5 MB cap, content validation).
-- Keep paste as the default; this is an additional input mode, not a replacement.
+### 5. Markdown artifact support
+Support Markdown artifacts with full parity to HTML — paste, file upload, and rendering:
+- **Rendering:** convert Markdown → HTML server-side, sanitized before display
+  (the viewer iframe stays sandboxed, same as HTML artifacts).
+- **Pasting:** paste Markdown into the deploy panel, like HTML today.
+- **File upload:** drag-drop / browse `.md` / `.markdown` files, reusing the
+  HTML file-upload path (`lib/web/upload.ts`, generalized to accept Markdown).
+- **Syntax highlighting:** highlight fenced code blocks in the *rendered* output
+  (distinct from the editor highlighting we use for the paste box today).
+- **Libraries (candidates):** a Markdown renderer (`markdown-it` or `marked`) plus a
+  sanitizer (`rehype-sanitize` or DOMPurify); Prism or Shiki for code-fence highlighting.
+- Goal: parity with HTML across paste / upload / render / highlight, and updating the
+  README, `/docs`, and CLI help to document the new format once it ships.
+
+> Note: HTML file upload (formerly item #5) shipped in
+> `docs/superpowers/specs/2026-06-25-batch-a-quick-wins-design.md`.
 
 ### 6. Homepage "look and feel" video illustration
 Convey the core artifact.host experience — turn HTML into a live link in seconds — which
