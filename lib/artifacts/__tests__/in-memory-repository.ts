@@ -13,6 +13,7 @@ export class InMemoryRepository implements ArtifactRepository {
       createdAt: new Date(),
       viewCount: 0,
       shareAllowlist: [],
+      commentsEnabled: false,
       ...rec,
     };
     this.rows.set(rec.slug, row);
@@ -44,6 +45,13 @@ export class InMemoryRepository implements ArtifactRepository {
     row.visibility = visibility;
     row.passwordHash = passwordHash;
     row.shareAllowlist = shareAllowlist;
+    return row;
+  }
+
+  async setCommentsEnabled(slug: string, enabled: boolean): Promise<ArtifactRecord> {
+    const row = this.rows.get(slug);
+    if (!row) throw new Error('not found');
+    row.commentsEnabled = enabled;
     return row;
   }
 

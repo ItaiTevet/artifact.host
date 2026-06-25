@@ -8,6 +8,7 @@ interface Row {
   visibility: string; password_hash: string | null; owner_id: string | null;
   edit_token_hash: string; deploy_ip_hash: string | null; share_allowlist: string | null;
   created_at: Date; expires_at: Date; view_count: string; // bigint comes back as string
+  comments_enabled: boolean;
 }
 
 function toRecord(r: Row): ArtifactRecord {
@@ -16,6 +17,7 @@ function toRecord(r: Row): ArtifactRecord {
     visibility: r.visibility as Visibility, passwordHash: r.password_hash,
     ownerId: r.owner_id, editTokenHash: r.edit_token_hash, deployIpHash: r.deploy_ip_hash,
     shareAllowlist: deserializeAllowlist(r.share_allowlist),
+    commentsEnabled: !!r.comments_enabled,
     createdAt: new Date(r.created_at), expiresAt: new Date(r.expires_at), viewCount: Number(r.view_count),
   };
 }
@@ -57,6 +59,13 @@ export class PgArtifactRepository implements ArtifactRepository {
     const { rows } = await this.pool.query<Row>(
       'update artifacts set visibility = $2, password_hash = $3, share_allowlist = $4 where slug = $1 returning *',
       [slug, visibility, passwordHash, serializeAllowlist(shareAllowlist)],
+    );
+    return toRecord(rows[0]);
+  }
+
+  async setCommentsEnabled(slug: string, enabled: boolean): Promise<ArtifactRecord> {
+    const { rows } = await this.pool.query<Row>(
+      'update artifacts set comments_enabled = $2 where slug = $1 returning *', [slug, enabled],
     );
     return toRecord(rows[0]);
   }

@@ -21,7 +21,8 @@ create table if not exists artifacts (
   share_allowlist text,
   created_at      text not null,
   expires_at      text not null,
-  view_count      integer not null default 0
+  view_count      integer not null default 0,
+  comments_enabled integer not null default 0
 );
 create index if not exists artifacts_expires_at_idx on artifacts (expires_at);
 create index if not exists artifacts_owner_id_idx   on artifacts (owner_id);
@@ -56,6 +57,7 @@ export function applySchema(db: Database.Database): void {
   db.exec(SQLITE_SCHEMA);
   // Idempotent upgrade for DBs created before the column existed (SQLite lacks ADD COLUMN IF NOT EXISTS).
   try { db.exec('alter table artifacts add column share_allowlist text'); } catch { /* already present */ }
+  try { db.exec('alter table artifacts add column comments_enabled integer not null default 0'); } catch { /* already present */ }
 }
 
 let db: Database.Database | null = null;

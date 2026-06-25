@@ -20,6 +20,7 @@ export interface ArtifactRepository {
   updateVisibility(
     slug: string, visibility: Visibility, passwordHash: string | null, shareAllowlist: SharePrincipal[],
   ): Promise<ArtifactRecord>;
+  setCommentsEnabled(slug: string, enabled: boolean): Promise<ArtifactRecord>;
   incrementViews(slug: string): Promise<void>;
   listByOwner(ownerId: string, now: Date): Promise<ArtifactSummary[]>;
   deleteOwned(slug: string, ownerId: string): Promise<boolean>;

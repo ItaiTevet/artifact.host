@@ -8,7 +8,7 @@ interface Row {
   visibility: Visibility; password_hash: string | null;
   owner_id: string | null; edit_token_hash: string; deploy_ip_hash: string | null;
   share_allowlist: string | null;
-  created_at: string; expires_at: string; view_count: number;
+  created_at: string; expires_at: string; view_count: number; comments_enabled: boolean;
 }
 
 function toRecord(r: Row): ArtifactRecord {
@@ -17,6 +17,7 @@ function toRecord(r: Row): ArtifactRecord {
     visibility: r.visibility, passwordHash: r.password_hash,
     ownerId: r.owner_id, editTokenHash: r.edit_token_hash, deployIpHash: r.deploy_ip_hash,
     shareAllowlist: deserializeAllowlist(r.share_allowlist),
+    commentsEnabled: !!r.comments_enabled,
     createdAt: new Date(r.created_at), expiresAt: new Date(r.expires_at), viewCount: Number(r.view_count),
   };
 }
@@ -61,6 +62,13 @@ export class SupabaseArtifactRepository implements ArtifactRepository {
     const { data, error } = await this.db.from('artifacts')
       .update({ visibility, password_hash: passwordHash, share_allowlist: serializeAllowlist(shareAllowlist) })
       .eq('slug', slug).select().single();
+    if (error) throw error;
+    return toRecord(data as Row);
+  }
+
+  async setCommentsEnabled(slug: string, enabled: boolean): Promise<ArtifactRecord> {
+    const { data, error } = await this.db.from('artifacts')
+      .update({ comments_enabled: enabled }).eq('slug', slug).select().single();
     if (error) throw error;
     return toRecord(data as Row);
   }

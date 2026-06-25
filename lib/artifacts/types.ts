@@ -19,6 +19,7 @@ export interface ArtifactRecord {
   editTokenHash: string;
   deployIpHash: string | null;
   shareAllowlist: SharePrincipal[];  // only meaningful when visibility === 'restricted'
+  commentsEnabled: boolean;          // owner opt-in; gates the annotation layer + comment endpoints
   createdAt: Date;
   expiresAt: Date;
   viewCount: number;

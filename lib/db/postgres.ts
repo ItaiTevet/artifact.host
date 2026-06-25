@@ -21,9 +21,11 @@ create table if not exists artifacts (
   share_allowlist text,
   created_at      timestamptz not null default now(),
   expires_at      timestamptz not null,
-  view_count      bigint not null default 0
+  view_count      bigint not null default 0,
+  comments_enabled boolean not null default false
 );
 alter table artifacts add column if not exists share_allowlist text;
+alter table artifacts add column if not exists comments_enabled boolean not null default false;
 create index if not exists artifacts_expires_at_idx on artifacts (expires_at);
 create index if not exists artifacts_owner_id_idx   on artifacts (owner_id);
 create index if not exists artifacts_ip_live_idx    on artifacts (deploy_ip_hash, expires_at);

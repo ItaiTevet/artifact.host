@@ -8,7 +8,7 @@ interface Row {
   id: string; slug: string; content: string; title: string | null;
   visibility: string; password_hash: string | null; owner_id: string | null;
   edit_token_hash: string; deploy_ip_hash: string | null; share_allowlist: string | null;
-  created_at: string; expires_at: string; view_count: number;
+  created_at: string; expires_at: string; view_count: number; comments_enabled: number;
 }
 
 function toRecord(r: Row): ArtifactRecord {
@@ -17,6 +17,7 @@ function toRecord(r: Row): ArtifactRecord {
     visibility: r.visibility as Visibility, passwordHash: r.password_hash,
     ownerId: r.owner_id, editTokenHash: r.edit_token_hash, deployIpHash: r.deploy_ip_hash,
     shareAllowlist: deserializeAllowlist(r.share_allowlist),
+    commentsEnabled: r.comments_enabled === 1,
     createdAt: new Date(r.created_at), expiresAt: new Date(r.expires_at), viewCount: Number(r.view_count),
   };
 }
@@ -30,6 +31,7 @@ export class SqliteArtifactRepository implements ArtifactRepository {
       visibility: rec.visibility, password_hash: rec.passwordHash, owner_id: rec.ownerId,
       edit_token_hash: rec.editTokenHash, deploy_ip_hash: rec.deployIpHash, share_allowlist: null,
       created_at: new Date().toISOString(), expires_at: rec.expiresAt.toISOString(), view_count: 0,
+      comments_enabled: 0,
     };
     this.db.prepare(
       `insert into artifacts (id, slug, content, title, visibility, password_hash, owner_id,
@@ -60,6 +62,11 @@ export class SqliteArtifactRepository implements ArtifactRepository {
   ): Promise<ArtifactRecord> {
     this.db.prepare('update artifacts set visibility = ?, password_hash = ?, share_allowlist = ? where slug = ?')
       .run(visibility, passwordHash, serializeAllowlist(shareAllowlist), slug);
+    return (await this.findBySlug(slug))!;
+  }
+
+  async setCommentsEnabled(slug: string, enabled: boolean): Promise<ArtifactRecord> {
+    this.db.prepare('update artifacts set comments_enabled = ? where slug = ?').run(enabled ? 1 : 0, slug);
     return (await this.findBySlug(slug))!;
   }
 
