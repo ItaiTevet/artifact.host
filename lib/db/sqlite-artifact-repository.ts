@@ -31,6 +31,7 @@ export class SqliteArtifactRepository implements ArtifactRepository {
       visibility: rec.visibility, password_hash: rec.passwordHash, owner_id: rec.ownerId,
       edit_token_hash: rec.editTokenHash, deploy_ip_hash: rec.deployIpHash, share_allowlist: null,
       created_at: new Date().toISOString(), expires_at: rec.expiresAt.toISOString(), view_count: 0,
+      // Satisfies the Row type; the insert SQL below omits this column, so the schema default (0) applies.
       comments_enabled: 0,
     };
     this.db.prepare(
