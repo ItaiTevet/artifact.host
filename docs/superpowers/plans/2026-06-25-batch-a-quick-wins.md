@@ -69,24 +69,36 @@ git commit -m "Extract shared GitHubMark icon" -m "Co-Authored-By: Claude Opus 4
 **Files:**
 - Modify: `components/site/Header.tsx`
 - Modify: `components/site/Header.module.css`
-- Test: `components/site/__tests__/Header.test.tsx` (create)
+- Test: `components/site/Header.test.tsx` (create — co-located, matching this repo's convention)
+
+> **Test conventions in this repo (important):** component tests are **co-located** next to the component (not in `__tests__/`), start with a `// @vitest-environment jsdom` pragma, and use **native Vitest matchers only** (`.toBeTruthy()`, `.toBe()`, `getAttribute()`). `@testing-library/jest-dom` is NOT installed — do **not** use `toHaveAttribute`/`toBeInTheDocument`. `getByRole`/`getByText`/`getByTestId` throw when not found, which is itself the assertion. `Header` renders `<AccountMenu/>`, which calls `getAccountEmail()` from `@/lib/web/auth` on mount, so mock that module.
 
 - [ ] **Step 1: Write the failing test**
 
-Create `components/site/__tests__/Header.test.tsx`:
+Create `components/site/Header.test.tsx`:
 
 ```tsx
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import { Header } from '@/components/site/Header';
+// @vitest-environment jsdom
+import { describe, it, expect, afterEach, vi } from 'vitest';
+import { render, screen, cleanup } from '@testing-library/react';
+
+// Header → AccountMenu calls getAccountEmail() on mount; keep it deterministic + offline.
+vi.mock('@/lib/web/auth', () => ({
+  getAccountEmail: vi.fn(async () => null),
+  signOut: vi.fn(async () => {}),
+}));
+
+import { Header } from './Header';
+
+afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
 describe('Header', () => {
   it('renders a GitHub repository link that opens in a new tab', () => {
     render(<Header />);
     const link = screen.getByRole('link', { name: /github repository/i });
-    expect(link).toHaveAttribute('href', 'https://github.com/ItaiTevet/artifact.host');
-    expect(link).toHaveAttribute('target', '_blank');
-    expect(link).toHaveAttribute('rel', expect.stringContaining('noopener'));
+    expect(link.getAttribute('href')).toBe('https://github.com/ItaiTevet/artifact.host');
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect((link.getAttribute('rel') ?? '')).toContain('noopener');
   });
 });
 ```
@@ -143,7 +155,7 @@ Run: `npx tsc --noEmit`
 Then:
 
 ```bash
-git add components/site/Header.tsx components/site/Header.module.css components/site/__tests__/Header.test.tsx
+git add components/site/Header.tsx components/site/Header.module.css components/site/Header.test.tsx
 git commit -m "Add GitHub repository link to the header nav" -m "Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 ```
 
@@ -243,31 +255,22 @@ git commit -m "Add validateUploadFile helper for HTML file uploads" -m "Co-Autho
 **Files:**
 - Modify: `components/home/DeployPanel.tsx`
 - Modify: `components/home/DeployPanel.module.css`
-- Test: `components/home/__tests__/DeployPanel.upload.test.tsx` (create)
+- Test: `components/home/DeployPanel.test.tsx` (ADD to the existing file — it already mocks `@/lib/web/auth` and sets up jsdom)
 
-- [ ] **Step 1: Write the failing test**
+> **Test conventions (same as Task 2):** add the two new `it()` cases to the **existing** `components/home/DeployPanel.test.tsx` describe block — do NOT create a new test file. The existing file already has the `// @vitest-environment jsdom` pragma and mocks `@/lib/web/auth` (`getAccountEmail`/`getAccessToken` → null) in `beforeEach`, so the panel renders signed-out with no real network. Use **native matchers only** (no jest-dom). FileReader is available in jsdom. The existing `typeHtml` helper queries the textarea by `/Paste your HTML/i`, which still matches the new placeholder.
 
-Create `components/home/__tests__/DeployPanel.upload.test.tsx`. This drives the browse `<input type="file">` (deterministic in jsdom; drag events are exercised manually in the browser). It uses the global `File` and fires a change event.
+- [ ] **Step 1: Write the failing tests (append to existing describe block)**
+
+Add these two `it()` cases inside the existing `describe('DeployPanel', () => { … })` in `components/home/DeployPanel.test.tsx`. They drive the browse `<input type="file">` (deterministic in jsdom; drag events are exercised manually in the browser). No extra mocking is needed — the file's existing `beforeEach`/`afterEach` apply.
 
 ```tsx
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { DeployPanel } from '@/components/home/DeployPanel';
-
-beforeEach(() => {
-  // DeployPanel calls getAccountEmail() on mount; stub network so it resolves signed-out.
-  vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: false, json: () => Promise.resolve({}) })));
-});
-
-describe('DeployPanel file upload', () => {
   it('loads a browsed .html file into the editor', async () => {
     render(<DeployPanel />);
     const input = screen.getByTestId('upload-input') as HTMLInputElement;
     const file = new File(['<h1>hi</h1>'], 'page.html', { type: 'text/html' });
     fireEvent.change(input, { target: { files: [file] } });
-    await waitFor(() => {
-      expect(screen.getByDisplayValue('<h1>hi</h1>')).toBeInTheDocument();
-    });
+    const ta = screen.getByPlaceholderText(/Paste your HTML/i) as HTMLTextAreaElement;
+    await waitFor(() => expect(ta.value).toContain('<h1>hi</h1>'));
   });
 
   it('rejects a non-HTML file with an error and does not load it', async () => {
@@ -275,16 +278,17 @@ describe('DeployPanel file upload', () => {
     const input = screen.getByTestId('upload-input') as HTMLInputElement;
     const file = new File(['x'], 'photo.png', { type: 'image/png' });
     fireEvent.change(input, { target: { files: [file] } });
-    await waitFor(() => {
-      expect(screen.getByText(/html file/i)).toBeInTheDocument();
-    });
+    await waitFor(() => expect(screen.getByText(/html file/i)).toBeTruthy());
+    const ta = screen.getByPlaceholderText(/Paste your HTML/i) as HTMLTextAreaElement;
+    expect(ta.value).toBe('');
   });
-});
 ```
+
+`screen.getByTestId` requires importing nothing extra (it's part of `@testing-library/react`'s `screen`). It is already imported in the file.
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `npm test -- DeployPanel.upload`
+Run: `npm test -- DeployPanel`
 Expected: FAIL — no element with `data-testid="upload-input"`.
 
 - [ ] **Step 3: Add upload state, file-read, drag handlers, and a ref**
@@ -405,16 +409,18 @@ Append to `components/home/DeployPanel.module.css`:
 
 - [ ] **Step 6: Run the tests to verify they pass**
 
-Run: `npm test -- DeployPanel.upload`
-Expected: PASS (loads HTML into the editor; rejects PNG with an error).
+Run: `npm test -- DeployPanel`
+Expected: PASS — all existing DeployPanel cases plus the two new upload cases (loads HTML into the editor; rejects PNG with an error and leaves the editor empty).
 
 - [ ] **Step 7: Type-check and commit**
 
 Run: `npx tsc --noEmit`
+Expected: no *new* errors from your changes. Note: `components/home/DeployPanel.test.tsx` has 2 pre-existing tsc errors on the base branch (loose `RequestInit`/`init.body` typings in the existing cases) that the repo currently tolerates (`npm test` passes; the production build does not type-check test files). Do NOT fix those pre-existing errors — they are out of scope. Just ensure your two new cases introduce no additional tsc errors.
+
 Then:
 
 ```bash
-git add components/home/DeployPanel.tsx components/home/DeployPanel.module.css components/home/__tests__/DeployPanel.upload.test.tsx
+git add components/home/DeployPanel.tsx components/home/DeployPanel.module.css components/home/DeployPanel.test.tsx
 git commit -m "Add drag-and-drop + browse HTML upload to the deploy panel" -m "Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 ```
 
@@ -520,7 +526,7 @@ git commit -m "Docs: note planned Markdown support in README and docs page" -m "
 - [ ] **Run the full test suite**
 
 Run: `npm test`
-Expected: all tests pass (existing + new: `upload`, `Header`, `DeployPanel.upload`).
+Expected: all tests pass (existing + new: `lib/web/__tests__/upload.test.ts`, `components/site/Header.test.tsx`, and the two added cases in `components/home/DeployPanel.test.tsx`).
 
 - [ ] **Type-check and build**
 
