@@ -5,6 +5,7 @@ export type Ttl = '1h' | '1d' | '7d' | '30d';
 export interface SharePrincipal {
   value: string;            // 'alice@intezer.com' or 'intezer.com'
   type: 'email' | 'domain';
+  role: 'view' | 'comment'; // 'view' = read-only; 'comment' = may also post comments
 }
 
 export interface ArtifactRecord {

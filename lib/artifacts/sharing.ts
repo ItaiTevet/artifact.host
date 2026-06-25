@@ -20,7 +20,7 @@ export function parsePrincipals(input: string): SharePrincipal[] {
     const key = `${type}:${value}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    out.push({ value, type });
+    out.push({ value, type, role: 'view' });
   }
   return out;
 }
@@ -40,7 +40,10 @@ export function deserializeAllowlist(raw: string | null | undefined): SharePrinc
   if (!raw) return [];
   try {
     const v = typeof raw === 'string' ? JSON.parse(raw) : raw;
-    return Array.isArray(v) ? (v as SharePrincipal[]) : [];
+    if (!Array.isArray(v)) return [];
+    return (v as Partial<SharePrincipal>[])
+      .filter((p): p is SharePrincipal => typeof p?.value === 'string' && (p.type === 'email' || p.type === 'domain'))
+      .map((p) => ({ value: p.value, type: p.type, role: p.role === 'comment' ? 'comment' : 'view' }));
   } catch {
     return [];
   }
@@ -53,5 +56,15 @@ export function emailAllowed(email: string | null | undefined, allowlist: ShareP
   const domain = e.split('@')[1];
   return allowlist.some((p) =>
     p.type === 'email' ? p.value === e : !!domain && p.value === domain,
+  );
+}
+
+/** True if a verified email matches an allowlist principal that has the 'comment' role. */
+export function commentAllowed(email: string | null | undefined, allowlist: SharePrincipal[]): boolean {
+  if (!email) return false;
+  const e = email.toLowerCase();
+  const domain = e.split('@')[1];
+  return allowlist.some((p) =>
+    p.role === 'comment' && (p.type === 'email' ? p.value === e : !!domain && p.value === domain),
   );
 }
