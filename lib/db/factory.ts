@@ -1,4 +1,5 @@
 import type { ArtifactRepository } from '@/lib/artifacts/repository';
+import type { CommentRepository } from '@/lib/artifacts/comment-repository';
 import type { TokenRepository } from '@/lib/auth/token-repository';
 import type { UserRepository } from '@/lib/auth/user-repository';
 import { getServiceClient } from '@/lib/db/supabase';
@@ -13,6 +14,7 @@ function driver(): Driver {
 }
 
 let artifactRepo: ArtifactRepository | null = null;
+let commentRepo: CommentRepository | null = null;
 let tokenRepo: TokenRepository | null = null;
 let userRepo: UserRepository | null = null;
 
@@ -32,6 +34,23 @@ export async function getArtifactRepository(): Promise<ArtifactRepository> {
     artifactRepo = new SupabaseArtifactRepository(getServiceClient());
   }
   return artifactRepo;
+}
+
+export async function getCommentRepository(): Promise<CommentRepository> {
+  if (commentRepo) return commentRepo;
+  if (driver() === 'sqlite') {
+    const { getSqliteDb } = await import('./sqlite');
+    const { SqliteCommentRepository } = await import('./sqlite-comment-repository');
+    commentRepo = new SqliteCommentRepository(getSqliteDb());
+  } else if (driver() === 'postgres') {
+    const { ensurePgSchema } = await import('./postgres');
+    const { PgCommentRepository } = await import('./pg-comment-repository');
+    commentRepo = new PgCommentRepository(await ensurePgSchema());
+  } else {
+    const { SupabaseCommentRepository } = await import('./supabase-comment-repository');
+    commentRepo = new SupabaseCommentRepository(getServiceClient());
+  }
+  return commentRepo;
 }
 
 export async function getTokenRepository(): Promise<TokenRepository> {
