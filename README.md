@@ -6,6 +6,9 @@ in the browser or push it from the CLI. Nothing to install for viewers.
 - **Hosted:** [artifact.host](https://artifact.host)
 - **Self-hostable:** one container, SQLite, local accounts — no external services required.
 
+> **Coming soon:** Markdown artifacts (paste, upload, and rendering) are on the
+> [roadmap](docs/ROADMAP.md#5-markdown-artifact-support). Today, artifacts are HTML.
+
 ## CLI
 
 ```bash

@@ -12,7 +12,8 @@ export default function DocsPage() {
         <h1 className={styles.h1}>Docs</h1>
         <p className={styles.lede}>
           Deploy HTML from the command line or directly over the REST API. Anonymous use is
-          fully supported via a one-time edit token; no account required.
+          fully supported via a one-time edit token; no account required. Markdown artifacts
+          are planned — see the <a href="https://github.com/ItaiTevet/artifact.host/blob/main/docs/ROADMAP.md">roadmap</a>.
         </p>
 
         <h2 className={styles.h2}>CLI</h2>
