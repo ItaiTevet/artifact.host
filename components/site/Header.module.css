@@ -12,3 +12,5 @@
   .header { padding: 0 18px; }
   .nav { gap: 14px; }
 }
+.iconLink { display: inline-flex; align-items: center; color: var(--ink-2); }
+.iconLink:hover { color: var(--ink); }
