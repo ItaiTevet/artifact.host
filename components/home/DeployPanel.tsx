@@ -43,12 +43,12 @@ export function DeployPanel() {
 
   function onDragOver(e: DragEvent<HTMLDivElement>) {
     e.preventDefault();
-    if (!dragging) setDragging(true);
+    setDragging(true);
   }
 
   function onDragLeave(e: DragEvent<HTMLDivElement>) {
-    // Only clear when leaving the box itself, not when moving over children.
-    if (e.currentTarget === e.target) setDragging(false);
+    // Clear only when the drag truly leaves the box — not when crossing between its children.
+    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragging(false);
   }
 
   useEffect(() => { getAccountEmail().then((e) => setSignedIn(!!e)).catch(() => setSignedIn(false)); }, []);
@@ -129,7 +129,7 @@ export function DeployPanel() {
           onChange={(e) => { loadFile(e.target.files?.[0]); e.target.value = ''; }}
         />
       </div>
-      <button type="button" className={styles.browse} onClick={() => fileInputRef.current?.click()}>
+      <button type="button" className={styles.browse} aria-label="Browse for an HTML file" onClick={() => fileInputRef.current?.click()}>
         or drop a file · browse
       </button>
 
