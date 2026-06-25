@@ -47,17 +47,18 @@ export async function listComments(
 
 export async function createComment(
   artifacts: ArtifactRepository, comments: CommentRepository, slug: string,
-  input: { body: string; anchor: Anchor }, viewer: Viewer | null,
+  input: { body: string; anchor: Anchor }, ctx: ReadContext,
 ): Promise<CommentRecord> {
   const record = loadEnabled(await artifacts.findBySlug(slug));
-  if (!canComment(record, viewer)) throw new ServiceError('forbidden', 'Not authorized to comment');
+  if (!canRead(record, ctx)) throw new ServiceError('forbidden', 'Not authorized to view this artifact');
+  if (!canComment(record, ctx.viewer)) throw new ServiceError('forbidden', 'Not authorized to comment');
   const body = input.body.trim();
   if (!body) throw new ServiceError('invalid_comment', 'Comment body is empty');
   if (Buffer.byteLength(body, 'utf8') > COMMENT_MAX_BYTES) {
     throw new ServiceError('comment_too_large', 'Comment is too large');
   }
   return comments.insert({
-    artifactSlug: slug, authorId: viewer!.ownerId, authorEmail: viewer!.email ?? null, body, anchor: input.anchor,
+    artifactSlug: slug, authorId: ctx.viewer!.ownerId, authorEmail: ctx.viewer!.email ?? null, body, anchor: input.anchor,
   });
 }
 
@@ -71,10 +72,11 @@ async function loadOwned(
 }
 
 export async function editCommentBody(
-  artifacts: ArtifactRepository, comments: CommentRepository, slug: string, id: string, body: string, viewer: Viewer | null,
+  artifacts: ArtifactRepository, comments: CommentRepository, slug: string, id: string, body: string, ctx: ReadContext,
 ): Promise<CommentRecord> {
-  const { comment } = await loadOwned(artifacts, comments, slug, id);
-  if (!viewer || viewer.ownerId !== comment.authorId) throw new ServiceError('forbidden', 'Only the author can edit');
+  const { record, comment } = await loadOwned(artifacts, comments, slug, id);
+  if (!canRead(record, ctx)) throw new ServiceError('forbidden', 'Not authorized to view this artifact');
+  if (!ctx.viewer || ctx.viewer.ownerId !== comment.authorId) throw new ServiceError('forbidden', 'Only the author can edit');
   const next = body.trim();
   if (!next) throw new ServiceError('invalid_comment', 'Comment body is empty');
   if (Buffer.byteLength(next, 'utf8') > COMMENT_MAX_BYTES) throw new ServiceError('comment_too_large', 'Comment is too large');
@@ -82,21 +84,23 @@ export async function editCommentBody(
 }
 
 export async function resolveComment(
-  artifacts: ArtifactRepository, comments: CommentRepository, slug: string, id: string, resolved: boolean, viewer: Viewer | null,
+  artifacts: ArtifactRepository, comments: CommentRepository, slug: string, id: string, resolved: boolean, ctx: ReadContext,
 ): Promise<CommentRecord> {
   const { record } = await loadOwned(artifacts, comments, slug, id);
-  if (!(isOwner(record, viewer) || canComment(record, viewer))) {
+  if (!canRead(record, ctx)) throw new ServiceError('forbidden', 'Not authorized to view this artifact');
+  if (!(isOwner(record, ctx.viewer) || canComment(record, ctx.viewer))) {
     throw new ServiceError('forbidden', 'Not authorized to resolve');
   }
   return comments.setResolved(id, resolved);
 }
 
 export async function deleteComment(
-  artifacts: ArtifactRepository, comments: CommentRepository, slug: string, id: string, viewer: Viewer | null,
+  artifacts: ArtifactRepository, comments: CommentRepository, slug: string, id: string, ctx: ReadContext,
 ): Promise<{ ok: true }> {
   const { record, comment } = await loadOwned(artifacts, comments, slug, id);
-  const isAuthor = !!viewer && viewer.ownerId === comment.authorId;
-  if (!isAuthor && !isOwner(record, viewer)) throw new ServiceError('forbidden', 'Not authorized to delete');
+  if (!canRead(record, ctx)) throw new ServiceError('forbidden', 'Not authorized to view this artifact');
+  const isAuthor = !!ctx.viewer && ctx.viewer.ownerId === comment.authorId;
+  if (!isAuthor && !isOwner(record, ctx.viewer)) throw new ServiceError('forbidden', 'Not authorized to delete');
   await comments.deleteById(id);
   return { ok: true };
 }
