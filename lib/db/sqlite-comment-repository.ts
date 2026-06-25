@@ -44,12 +44,16 @@ export class SqliteCommentRepository implements CommentRepository {
 
   async updateBody(id: string, body: string): Promise<CommentRecord> {
     this.db.prepare('update comments set body = ? where id = ?').run(body, id);
-    return (await this.findById(id))!;
+    const updated = await this.findById(id);
+    if (!updated) throw new Error(`Comment not found: ${id}`);
+    return updated;
   }
 
   async setResolved(id: string, resolved: boolean): Promise<CommentRecord> {
     this.db.prepare('update comments set resolved = ? where id = ?').run(resolved ? 1 : 0, id);
-    return (await this.findById(id))!;
+    const updated = await this.findById(id);
+    if (!updated) throw new Error(`Comment not found: ${id}`);
+    return updated;
   }
 
   async deleteById(id: string): Promise<boolean> {

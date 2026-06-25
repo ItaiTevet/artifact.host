@@ -43,6 +43,7 @@ export class PgCommentRepository implements CommentRepository {
     const { rows } = await this.pool.query<Row>(
       'update comments set body = $2 where id = $1 returning *', [id, body],
     );
+    if (!rows[0]) throw new Error(`Comment not found: ${id}`);
     return toRecord(rows[0]);
   }
 
@@ -50,6 +51,7 @@ export class PgCommentRepository implements CommentRepository {
     const { rows } = await this.pool.query<Row>(
       'update comments set resolved = $2 where id = $1 returning *', [id, resolved],
     );
+    if (!rows[0]) throw new Error(`Comment not found: ${id}`);
     return toRecord(rows[0]);
   }
 
