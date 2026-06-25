@@ -1,0 +1,23 @@
+/* Shared base for the live HTML editor (wraps react-simple-code-editor). The textarea
+   and highlight <pre> inherit font/color from this container, so set them here. */
+.editor {
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.7;
+  border-radius: 3px;
+}
+
+/* Light surface — used inside the home paste box (the box draws the border/background). */
+.light { color: var(--ink); background: transparent; }
+
+/* Dark surface — the standalone editor on the Edit page. */
+.dark {
+  color: #cfc9c0;
+  background: #111009;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  font-size: 12.5px;
+}
+
+.textarea { caret-color: var(--amber); outline: none; }
+.textarea::placeholder { color: var(--ink-3); -webkit-text-fill-color: var(--ink-3); }

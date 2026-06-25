@@ -1,0 +1,63 @@
+/* Prism token palettes. Token rules are wrapped in a CSS-module class and target the
+   global `.token` classes Prism emits, so module hashing doesn't break the match.
+   Two surfaces: `.dark` for the #111009 code/editor panes, `.light` for the cream paste box.
+   (Stock-ish syntax colors — legible on each surface rather than brand-matched.) */
+
+.block {
+  display: block;
+  background: #111009;
+  color: #cfc9c0;
+  border-radius: 4px;
+  padding: 14px 16px;
+  margin: 10px 0 20px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.block code { font-family: inherit; background: none; padding: 0; }
+
+.dark :global(.token.comment),
+.dark :global(.token.prolog),
+.dark :global(.token.doctype),
+.dark :global(.token.cdata) { color: #7d766a; font-style: italic; }
+.dark :global(.token.punctuation) { color: #a39b8d; }
+.dark :global(.token.tag),
+.dark :global(.token.keyword),
+.dark :global(.token.selector) { color: #e08a5a; }
+.dark :global(.token.attr-name),
+.dark :global(.token.property),
+.dark :global(.token.constant),
+.dark :global(.token.symbol) { color: #d8b65c; }
+.dark :global(.token.string),
+.dark :global(.token.attr-value),
+.dark :global(.token.char),
+.dark :global(.token.inserted) { color: #97b87f; }
+.dark :global(.token.number),
+.dark :global(.token.boolean) { color: #c39bdb; }
+.dark :global(.token.operator),
+.dark :global(.token.url) { color: #9fb6c2; }
+.dark :global(.token.function) { color: #7fb4c9; }
+
+.light :global(.token.comment),
+.light :global(.token.prolog),
+.light :global(.token.doctype),
+.light :global(.token.cdata) { color: #998f7d; font-style: italic; }
+.light :global(.token.punctuation) { color: #8a8174; }
+.light :global(.token.tag),
+.light :global(.token.keyword),
+.light :global(.token.selector) { color: #b5651d; }
+.light :global(.token.attr-name),
+.light :global(.token.property),
+.light :global(.token.constant),
+.light :global(.token.symbol) { color: #8a6d1b; }
+.light :global(.token.string),
+.light :global(.token.attr-value),
+.light :global(.token.char),
+.light :global(.token.inserted) { color: #4f7a52; }
+.light :global(.token.number),
+.light :global(.token.boolean) { color: #7a4fb0; }
+.light :global(.token.operator),
+.light :global(.token.url) { color: #8a8174; }
+.light :global(.token.function) { color: #2f6f86; }

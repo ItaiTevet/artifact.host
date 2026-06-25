@@ -2,14 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { getAccessToken, getAccountEmail, signInWithOAuth, signInWithOidc, isPasswordAuth, isOidcAuth, OIDC_LABEL } from '@/lib/web/auth';
-import { PasswordSignIn } from '@/components/dashboard/PasswordSignIn';
-
-const wrap: React.CSSProperties = { fontFamily: 'system-ui', maxWidth: 460, margin: '15vh auto', padding: 24 };
-const btn: React.CSSProperties = {
-  display: 'block', width: '100%', padding: '10px 14px', marginTop: 10,
-  borderRadius: 8, border: '1px solid #ccc', background: '#fff', cursor: 'pointer', fontSize: 15,
-};
+import { getAccessToken, getAccountEmail } from '@/lib/web/auth';
+import { SignInGate } from '@/components/dashboard/SignInGate';
+import card from '@/components/dashboard/SignInGate.module.css';
 
 export default function CliAuthClient() {
   const params = useSearchParams();
@@ -21,9 +16,8 @@ export default function CliAuthClient() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    getAccountEmail().then((e) => { setEmail(e); setReady(true); });
-  }, []);
+  function loadEmail() { return getAccountEmail().then((e) => { setEmail(e); setReady(true); }); }
+  useEffect(() => { void loadEmail(); }, []);
 
   const validTarget = !!port && /^\d+$/.test(port) && !!state;
 
@@ -51,46 +45,53 @@ export default function CliAuthClient() {
     }
   }
 
+  // Opened directly (not by the CLI) — nothing to authorize.
   if (!validTarget) {
     return (
-      <main style={wrap}>
-        <h1 style={{ fontSize: 20 }}>Connect the CLI</h1>
-        <p>This page is opened by the <code>artifact</code> CLI. Run <code>artifact auth login</code> in your terminal to start.</p>
-      </main>
+      <div className={card.wrap}>
+        <div className={card.card}>
+          <span className={card.eyebrow}>artifact.host</span>
+          <h1 className={card.title}>Connect the CLI</h1>
+          <p className={card.subtitle}>
+            This page is opened by the <code>artifact</code> CLI. Run{' '}
+            <code>artifact auth login</code> in your terminal to start.
+          </p>
+        </div>
+      </div>
     );
   }
 
-  if (!ready) return <main style={wrap}>Loading…</main>;
+  if (!ready) return <p style={{ textAlign: 'center', color: 'var(--ink-3)', padding: '18vh 20px' }}>Loading…</p>;
 
-  return (
-    <main style={wrap}>
-      <h1 style={{ fontSize: 20 }}>Connect the CLI</h1>
-      {email ? (
-        <>
-          <p>Authorize the <strong>artifact</strong> CLI on this device as <strong>{email}</strong>?</p>
-          <p style={{ color: '#666', fontSize: 13 }}>
+  // Signed in → confirm authorization with the same branded card.
+  if (email) {
+    return (
+      <div className={card.wrap}>
+        <div className={card.card}>
+          <span className={card.eyebrow}>artifact.host</span>
+          <h1 className={card.title}>Connect the CLI</h1>
+          <p className={card.subtitle}>
+            Authorize the <strong>artifact</strong> CLI on this device as <strong>{email}</strong>?
             A Personal API Token will be created and sent only to the CLI running on your machine.
           </p>
-          <button style={{ ...btn, background: '#0e0c09', color: '#fff' }} onClick={authorize} disabled={busy}>
-            {busy ? 'Authorizing…' : 'Authorize CLI'}
-          </button>
-          {error && <p style={{ color: '#b00', fontSize: 13 }}>{error}</p>}
-        </>
-      ) : (
-        <>
-          <p>Sign in to authorize the CLI on this device.</p>
-          {isPasswordAuth ? (
-            <PasswordSignIn onSignedIn={() => getAccountEmail().then(setEmail)} />
-          ) : isOidcAuth ? (
-            <button style={btn} onClick={() => signInWithOidc()}>Continue with {OIDC_LABEL}</button>
-          ) : (
-            <>
-              <button style={btn} onClick={() => signInWithOAuth('google')}>Continue with Google</button>
-              <button style={btn} onClick={() => signInWithOAuth('github')}>Continue with GitHub</button>
-            </>
-          )}
-        </>
-      )}
-    </main>
+          <div className={card.buttons}>
+            <button className={`${card.btn} ${card.github}`} onClick={authorize} disabled={busy}>
+              <span className={card.label}>{busy ? 'Authorizing…' : 'Authorize CLI'}</span>
+            </button>
+          </div>
+          {error && <p className={card.foot} style={{ color: '#b00020' }}>{error}</p>}
+        </div>
+      </div>
+    );
+  }
+
+  // Signed out → reuse the standard sign-in gate (Google/GitHub, SSO, or email+password,
+  // depending on the instance's auth provider), then re-check the session.
+  return (
+    <SignInGate
+      title="Connect the CLI"
+      subtitle="Sign in to authorize the CLI on this device."
+      onSignedIn={() => { void loadEmail(); }}
+    />
   );
 }

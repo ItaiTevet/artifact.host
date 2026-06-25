@@ -1,8 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { getAccessToken } from '@/lib/web/auth';
 import { SignInGate } from '@/components/dashboard/SignInGate';
+import styles from './gate.module.css';
 
 type State =
   | { phase: 'loading' }
@@ -53,14 +55,32 @@ export function RestrictedGate({ slug }: { slug: string }) {
 
   if (state.phase === 'denied') {
     return (
-      <main style={center}>
-        <p>This artifact is shared with specific people, and your account isn’t on the list.</p>
-        <p style={{ fontSize: 13, color: 'var(--ink-3)' }}>Ask the owner to add your email or domain.</p>
-      </main>
+      <div className={styles.wrap}>
+        <div className={styles.logo}>artifact<b>.host</b></div>
+        <h1 className={styles.h1}>You don’t have access</h1>
+        <p className={styles.muted}>
+          This artifact is shared with specific people, and your account isn’t on the list.
+          Ask the owner to add your email or domain.
+        </p>
+        <p className={styles.muted} style={{ marginTop: 16 }}>
+          <Link className={styles.link} href="/">Deploy your own →</Link>
+        </p>
+      </div>
     );
   }
 
-  if (state.phase === 'notfound') return <main style={center}>This artifact doesn’t exist or has expired.</main>;
+  if (state.phase === 'notfound') {
+    return (
+      <div className={styles.wrap}>
+        <div className={styles.logo}>artifact<b>.host</b></div>
+        <h1 className={styles.h1}>This artifact isn’t here</h1>
+        <p className={styles.muted}>It doesn’t exist, or it may have expired.</p>
+        <p className={styles.muted} style={{ marginTop: 16 }}>
+          <Link className={styles.link} href="/">Deploy a new one →</Link>
+        </p>
+      </div>
+    );
+  }
 
   return (
     <iframe

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { getAccessToken } from '@/lib/web/auth';
+import { CopyButton } from '@/components/ui/CopyButton';
 import { SignInGate } from './SignInGate';
 import styles from '@/app/dashboard/dashboard.module.css';
 
@@ -79,7 +80,10 @@ export function TokensClient() {
       {fresh && (
         <div style={{ ...box, borderColor: '#b36b20', background: '#fbf6ee', flexDirection: 'column', alignItems: 'stretch' }}>
           <strong style={{ fontSize: 14 }}>Copy your new token now — it won’t be shown again:</strong>
-          <span style={code}>{fresh}</span>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'stretch' }}>
+            <span style={code}>{fresh}</span>
+            <CopyButton text={fresh} label="Copy" className={styles.copyBtn} />
+          </div>
         </div>
       )}
 

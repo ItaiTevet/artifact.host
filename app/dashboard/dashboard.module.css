@@ -4,3 +4,18 @@
 .empty { font-size: 15px; color: var(--ink-3); line-height: 1.6; }
 .empty a { color: var(--amber); }
 .status { max-width: 720px; margin: 0 auto; padding: 48px 20px; text-align: center; color: var(--ink-3); }
+
+.copyBtn {
+  flex: none;
+  padding: 0 14px;
+  border: 1px solid var(--ink);
+  border-radius: 6px;
+  background: var(--ink);
+  color: #fff;
+  font-family: var(--mono, monospace);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.copyBtn:hover { background: #26211c; }

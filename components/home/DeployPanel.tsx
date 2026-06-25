@@ -6,6 +6,7 @@ import { deployErrorMessage } from '@/lib/web/errors';
 import { getAccessToken, getAccountEmail } from '@/lib/web/auth';
 import { ResultCard, type DeployResult } from './ResultCard';
 import { PasswordField } from '@/components/ui/PasswordField';
+import { HtmlEditor } from '@/components/ui/HtmlEditor';
 import styles from './DeployPanel.module.css';
 
 const TTLS: Ttl[] = ['1h', '1d', '7d', '30d'];
@@ -76,12 +77,12 @@ export function DeployPanel() {
   return (
     <div className={styles.wrap}>
       <div className={styles.box}>
-        <textarea
-          className={styles.textarea}
-          placeholder="Paste your HTML here..."
+        <HtmlEditor
+          variant="light"
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onValueChange={setContent}
           onKeyDown={onKeyDown}
+          placeholder="Paste your HTML here..."
         />
         <div className={styles.hint}>⌘↵ deploy</div>
       </div>

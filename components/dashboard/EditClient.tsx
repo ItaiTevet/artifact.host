@@ -7,6 +7,7 @@ import { validateEditInput, editErrorMessage } from '@/lib/web/dashboard';
 import type { Visibility } from '@/lib/web/deploy';
 import { SignInGate } from './SignInGate';
 import { PasswordField } from '@/components/ui/PasswordField';
+import { HtmlEditor } from '@/components/ui/HtmlEditor';
 import styles from '@/app/dashboard/[slug]/edit.module.css';
 
 type Phase = 'loading' | 'signedOut' | 'notFound' | 'ready';
@@ -95,8 +96,8 @@ export function EditClient({ slug }: { slug: string }) {
       </div>
 
       <label className={styles.label} htmlFor="html">HTML</label>
-      <textarea id="html" aria-label="HTML" className={styles.textarea}
-        value={content} onChange={(e) => { setContent(e.target.value); setSaved(false); }} />
+      <HtmlEditor variant="dark" id="html" value={content}
+        onValueChange={(v) => { setContent(v); setSaved(false); }} />
 
       <div className={styles.controls}>
         <span className={styles.label}>Visibility</span>
@@ -115,12 +116,12 @@ export function EditClient({ slug }: { slug: string }) {
               aria-label="Allowed emails and domains"
               className={styles.textarea}
               style={{ minHeight: 90 }}
-              placeholder={'Who can view (one per line):\nalice@intezer.com\n@intezer.com'}
+              placeholder={'Who can view (one per line):\nalice@example.com\n@yourcompany.com'}
               value={allowlist}
               onChange={(e) => { setAllowlist(e.target.value); setSaved(false); }}
             />
             <p style={{ fontSize: 12, color: 'var(--ink-3)', lineHeight: 1.6, marginTop: 6 }}>
-              Viewers must sign in; an email grants one person, a domain (e.g. <code>@intezer.com</code>)
+              Viewers must sign in; an email grants one person, a domain (e.g. <code>@yourcompany.com</code>)
               grants everyone there. You always have access.
             </p>
           </div>

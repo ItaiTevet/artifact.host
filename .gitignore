@@ -58,3 +58,6 @@ next-env.d.ts
 # local dev/smoke logs
 .dev.log
 .smoke.log
+
+# local visual-review artifacts (screenshots, seed scripts)
+/review-screenshots

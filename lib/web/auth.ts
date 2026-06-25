@@ -1,6 +1,12 @@
 'use client';
 
 import * as supa from './supabase-browser';
+import { withTimeout } from './with-timeout';
+
+// Cap how long we'll wait for an auth lookup. A provider call that hangs (a Supabase
+// session refresh that never resolves, an unreachable /api/auth/me) must degrade to
+// "signed out" rather than leaving callers stuck on an infinite loading state.
+const AUTH_TIMEOUT_MS = 6000;
 
 // Build-time provider selection. Cloud builds default to Supabase; a self-host image sets
 // NEXT_PUBLIC_AUTH_PROVIDER=local-password (or oidc) when building.
@@ -25,17 +31,21 @@ if (typeof window !== 'undefined') consumeSessionFragment();
 
 /** Bearer token for API calls (Supabase access token, or our first-party session). */
 export async function getAccessToken(): Promise<string | null> {
-  if (isSupabaseAuth) return supa.getAccessToken();
+  if (isSupabaseAuth) return withTimeout(supa.getAccessToken(), AUTH_TIMEOUT_MS, null);
   return localStorage.getItem(TOKEN_KEY);
 }
 
 export async function getAccountEmail(): Promise<string | null> {
-  if (isSupabaseAuth) return supa.getAccountEmail();
+  if (isSupabaseAuth) return withTimeout(supa.getAccountEmail(), AUTH_TIMEOUT_MS, null);
   const token = localStorage.getItem(TOKEN_KEY);
   if (!token) return null;
   try {
-    const res = await fetch('/api/auth/me', { headers: { authorization: `Bearer ${token}` } });
-    if (!res.ok) return null;
+    const res = await withTimeout(
+      fetch('/api/auth/me', { headers: { authorization: `Bearer ${token}` } }),
+      AUTH_TIMEOUT_MS,
+      null,
+    );
+    if (!res || !res.ok) return null;
     return (await res.json()).email ?? null;
   } catch {
     return null;

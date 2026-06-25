@@ -1,18 +1,18 @@
 import { Suspense } from 'react';
+import { Header } from '@/components/site/Header';
 import CliAuthClient from './CliAuthClient';
 
 export const dynamic = 'force-dynamic';
 
 export default function CliAuthPage() {
   return (
-    <Suspense
-      fallback={
-        <main style={{ fontFamily: 'system-ui', maxWidth: 460, margin: '15vh auto', padding: 24 }}>
-          Loading…
-        </main>
-      }
-    >
-      <CliAuthClient />
-    </Suspense>
+    <>
+      <Header />
+      <main>
+        <Suspense fallback={<p style={{ textAlign: 'center', color: 'var(--ink-3)', padding: '18vh 20px' }}>Loading…</p>}>
+          <CliAuthClient />
+        </Suspense>
+      </main>
+    </>
   );
 }
