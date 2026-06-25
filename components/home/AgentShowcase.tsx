@@ -8,14 +8,9 @@ npx artifact-host deploy ./index.html`;
 export function AgentShowcase() {
   return (
     <section className={styles.section} aria-labelledby="agents-heading">
-      <span className={styles.eyebrow}>Built for agentic workflows</span>
       <h2 id="agents-heading" className={styles.heading}>
-        Your agent&rsquo;s last step:<br />a live link.
+        Built for agentic workflows
       </h2>
-      <p className={styles.sub}>
-        Any AI agent that can run a shell command can publish to a real URL — no API keys,
-        nothing to install for whoever you share it with.
-      </p>
 
       <div className={styles.terminal}>
         <div className={styles.termHeader}>
@@ -50,7 +45,7 @@ export function AgentShowcase() {
           ))}
         </div>
         <p className={styles.caption}>
-          Runs anywhere your agent has a terminal — Claude, Cursor, VS Code, and more.
+          Runs anywhere your agent has access to a CLI tool — Claude, Cursor, VS Code, and more.
         </p>
       </div>
     </section>

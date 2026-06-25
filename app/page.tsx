@@ -11,7 +11,7 @@ export default function Home() {
         <div className={styles.hero}>
           <h1 className={styles.headline}>Share what<br />your AI built.</h1>
           <p className={styles.subline}>
-            Push it from your agent&rsquo;s terminal, or paste it below. Renders live at a short URL — nothing to install for viewers.
+            Turn an HTML file into a live, shareable URL in seconds — paste it in the browser or push it from the CLI. Nothing to install for viewers.
           </p>
         </div>
         <AgentShowcase />
