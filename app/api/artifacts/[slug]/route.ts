@@ -3,8 +3,19 @@ import { updateArtifact, setVisibility, getOwnArtifact, deleteArtifact } from '@
 import { ownerIdFromRequest, requireOwner } from '@/lib/http/request-auth';
 import { parsePrincipals, formatPrincipals } from '@/lib/artifacts/sharing';
 import { errorResponse } from '@/lib/http/errors';
+import { readLimitedJson } from '@/lib/http/body';
+import { REQUEST_MAX_BYTES } from '@/lib/artifacts/validate';
+import type { Visibility } from '@/lib/artifacts/types';
 
 export const runtime = 'nodejs';
+
+interface PatchBody {
+  visibility?: Visibility;
+  allowlist?: unknown;
+  password?: string | null;
+  content?: string;
+  edit_token?: string;
+}
 
 // Fetch one artifact's content for the dashboard editor (owner only).
 export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }) {
@@ -29,7 +40,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
 export async function PATCH(req: Request, { params }: { params: Promise<{ slug: string }> }) {
   try {
     const { slug } = await params;
-    const body = await req.json();
+    const body = await readLimitedJson<PatchBody>(req, REQUEST_MAX_BYTES);
     // Authorize by signed-in owner (Bearer) when present, else fall back to edit token.
     const ownerId = await ownerIdFromRequest(req);
     const editToken = req.headers.get('x-edit-token') ?? body?.edit_token ?? null;

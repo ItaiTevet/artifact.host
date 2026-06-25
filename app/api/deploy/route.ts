@@ -3,12 +3,22 @@ import { deployArtifact } from '@/lib/artifacts/service';
 import { getIpHash } from '@/lib/http/request-context';
 import { ownerIdFromRequest } from '@/lib/http/request-auth';
 import { errorResponse } from '@/lib/http/errors';
+import { readLimitedJson } from '@/lib/http/body';
+import { REQUEST_MAX_BYTES } from '@/lib/artifacts/validate';
+import type { Visibility, Ttl } from '@/lib/artifacts/types';
 
 export const runtime = 'nodejs';
 
+interface DeployBody {
+  content?: unknown;
+  visibility?: Visibility;
+  password?: string | null;
+  ttl?: Ttl;
+}
+
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const body = await readLimitedJson<DeployBody>(req, REQUEST_MAX_BYTES);
     if (typeof body?.content !== 'string') {
       return Response.json({ error: 'invalid_visibility', message: 'content (string) is required' }, { status: 400 });
     }

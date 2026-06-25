@@ -1,9 +1,12 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
+import { requireSecret } from '@/lib/config/secret';
 
 const TTL_MS = 30 * 60 * 1000; // 30 minutes
 
 function secret(): string {
-  return process.env.COOKIE_SECRET ?? 'dev-only-insecure-secret';
+  // Fails closed in production: an unset COOKIE_SECRET would otherwise let anyone forge a
+  // password cookie (HMAC over a public default) and bypass password-protected artifacts.
+  return requireSecret('COOKIE_SECRET', { devFallback: 'dev-only-insecure-secret' });
 }
 
 export function cookieName(slug: string): string {

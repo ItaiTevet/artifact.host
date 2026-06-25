@@ -45,6 +45,12 @@ create table if not exists users (
   password_hash text not null,
   created_at    timestamptz not null default now()
 );
+
+create table if not exists auth_attempts (
+  ip_hash    text not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists auth_attempts_ip_time_idx on auth_attempts (ip_hash, created_at);
 `;
 
 let pool: Pool | null = null;

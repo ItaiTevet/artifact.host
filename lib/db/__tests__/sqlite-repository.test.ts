@@ -110,4 +110,26 @@ describe('SqliteUserRepository', () => {
     expect(await repo.findByEmail('missing@b.com')).toBeNull();
     expect(await repo.count()).toBe(1);
   });
+
+  it('records and counts recent auth attempts per ip within a window', async () => {
+    const repo = new SqliteUserRepository(freshDb());
+    const now = new Date();
+    const since = new Date(now.getTime() - 10 * 60 * 1000);
+    await repo.recordAuthAttempt('ipA', now);
+    await repo.recordAuthAttempt('ipA', now);
+    await repo.recordAuthAttempt('ipB', now);
+    expect(await repo.countRecentAuthAttempts('ipA', since)).toBe(2);
+    expect(await repo.countRecentAuthAttempts('ipB', since)).toBe(1);
+    expect(await repo.countRecentAuthAttempts('ipC', since)).toBe(0);
+  });
+
+  it('self-prunes attempts older than the window and excludes them from counts', async () => {
+    const repo = new SqliteUserRepository(freshDb());
+    const old = new Date('2020-01-01T00:00:00Z');
+    await repo.recordAuthAttempt('ipA', old);            // far in the past
+    const now = new Date();
+    await repo.recordAuthAttempt('ipA', now);            // recording prunes the stale row
+    const since = new Date(now.getTime() - 10 * 60 * 1000);
+    expect(await repo.countRecentAuthAttempts('ipA', since)).toBe(1);
+  });
 });

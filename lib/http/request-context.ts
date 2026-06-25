@@ -1,7 +1,29 @@
 import { createHash } from 'node:crypto';
 
-function firstForwardedIp(xff: string | null | undefined): string {
-  return (xff ?? '').split(',')[0]?.trim() || 'unknown';
+/**
+ * Number of trusted reverse-proxy hops in front of the app.
+ *
+ * Unset/0 (the Vercel default): Vercel overwrites `x-forwarded-for` with the real client IP
+ * and blocks client spoofing, so the leftmost value is authoritative. Set this to the number
+ * of proxies you run in front of a self-hosted instance (e.g. 1 for a single nginx/Caddy) so
+ * a client-supplied (spoofed) leftmost XFF can't forge the IP used for rate limiting.
+ */
+function trustedHops(): number {
+  const n = Number(process.env.TRUSTED_PROXY_HOPS);
+  return Number.isInteger(n) && n > 0 ? n : 0;
+}
+
+/** Resolve the client IP from an x-forwarded-for chain, honoring TRUSTED_PROXY_HOPS. */
+function clientIp(xff: string | null | undefined): string {
+  const parts = (xff ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+  if (parts.length === 0) return 'unknown';
+  const hops = trustedHops();
+  // hops=0: trust the platform-set leftmost value (Vercel).
+  // hops>0: the real client is the entry the outermost trusted proxy appended, i.e. `hops`
+  // positions from the right end. Clamped so a forged short chain can't underflow.
+  if (hops === 0) return parts[0];
+  const idx = parts.length - hops;
+  return parts[Math.min(Math.max(idx, 0), parts.length - 1)];
 }
 
 export function hashIp(ip: string): string {
@@ -9,14 +31,14 @@ export function hashIp(ip: string): string {
 }
 
 export function getIpHash(req: Request): string {
-  return hashIp(firstForwardedIp(req.headers.get('x-forwarded-for')));
+  return hashIp(clientIp(req.headers.get('x-forwarded-for')));
 }
 
-/** Same hashing as getIpHash, but from a plain headers object (e.g. MCP requestInfo.headers). */
+/** Same hashing as getIpHash, but from a plain headers object. */
 export function getIpHashFromHeaders(
   headers: Record<string, string | string[] | undefined>,
 ): string {
   const v = headers['x-forwarded-for'];
-  const xff = Array.isArray(v) ? v[0] : v ?? null;
-  return hashIp(firstForwardedIp(xff));
+  const xff = Array.isArray(v) ? v.join(',') : v ?? null;
+  return hashIp(clientIp(xff));
 }

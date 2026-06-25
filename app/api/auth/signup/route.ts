@@ -2,6 +2,8 @@ import { getUserRepository } from '@/lib/db/factory';
 import { authProvider } from '@/lib/auth/server';
 import { issueSession } from '@/lib/auth/session';
 import { hashPassword } from '@/lib/artifacts/tokens';
+import { checkAuthRateLimit } from '@/lib/auth/rate-limit';
+import { getIpHash } from '@/lib/http/request-context';
 
 export const runtime = 'nodejs';
 
@@ -23,6 +25,10 @@ export async function POST(req: Request) {
   }
 
   const repo = await getUserRepository();
+  // Throttle per IP before running scrypt (blocks signup spam + CPU-exhaustion DoS).
+  if (await checkAuthRateLimit(repo, getIpHash(req))) {
+    return Response.json({ error: 'rate_limited', message: 'Too many attempts; try again later' }, { status: 429 });
+  }
   // When sign-up is disabled, still allow bootstrapping the very first account so the
   // instance owner can create their admin login; everyone after that is blocked.
   if (signupDisabled() && (await repo.count()) > 0) {

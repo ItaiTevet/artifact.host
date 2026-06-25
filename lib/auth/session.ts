@@ -1,15 +1,12 @@
 import { SignJWT, jwtVerify } from 'jose';
+import { requireSecret } from '@/lib/config/secret';
 
 const ISSUER = 'artifact.host';
 const ALG = 'HS256';
 const DEFAULT_TTL_S = 30 * 24 * 60 * 60; // 30 days
 
 function secret(): Uint8Array {
-  const s = process.env.AUTH_SECRET;
-  if (!s || s.length < 16) {
-    throw new Error('AUTH_SECRET (>= 16 chars) is required for local-password/oidc auth');
-  }
-  return new TextEncoder().encode(s);
+  return new TextEncoder().encode(requireSecret('AUTH_SECRET'));
 }
 
 export interface SessionIdentity {
