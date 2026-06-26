@@ -121,7 +121,7 @@ export function buildAnnotationScript(nonce: string): string {
     selBtn.style.left=left+'px'; selBtn.style.top=top+'px';
   }
   function evalSelection(){
-    if(mode!=='commenting'||sticky==='__composer__'){ hideSelBtn(); pendingHL=null; return; }
+    if(mode!=='commenting'||sticky){ hideSelBtn(); pendingHL=null; return; }
     var sel=window.getSelection&&window.getSelection();
     if(!sel||sel.isCollapsed){ hideSelBtn(); pendingHL=null; return; }
     var q=String(sel).trim(); if(!q){ hideSelBtn(); pendingHL=null; return; }
@@ -179,7 +179,7 @@ export function buildAnnotationScript(nonce: string): string {
   document.addEventListener('pointerup',onSelChange);
   document.addEventListener('click',onOutside,false);
   window.addEventListener('keydown',function(e){ if(e.key==='Escape') hidePop(); });
-  window.addEventListener('resize',function(){ layer.classList.toggle('touch',mobile()); render(); if(pop.style.display!=='none') hidePop(); });
+  window.addEventListener('resize',function(){ layer.classList.toggle('touch',mobile()); render(); if(pop.style.display!=='none' && !pop.classList.contains('sheet') && sticky!=='__composer__') hidePop(); });
   if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',ready); } else { ready(); }
 })();`;
 }
