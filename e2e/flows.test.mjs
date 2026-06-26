@@ -104,7 +104,7 @@ describe('artifact.host e2e (cloud + self-host)', () => {
   test('comments: disabled by default → enable → post → list → edit → resolve → delete', async () => {
     const d = await (await api('/api/deploy', { method: 'POST', token: T.ownerToken, body: { content: '<h1>c</h1>', ttl: '1h' } })).json();
     const slug = slugOf(d.url); ownedSlugs.push(slug);
-    const pin = { kind: 'pin', x: 0.5, y: 0.5 };
+    const pin = { kind: 'pin', path: [0], context: '' };
 
     // disabled by default
     assert.equal(
@@ -149,7 +149,7 @@ describe('artifact.host e2e (cloud + self-host)', () => {
     if (!T.canCreateIdentities) { t.diagnostic('cloud mode: skipping multi-identity comment-role checks'); return; }
     const d = await (await api('/api/deploy', { method: 'POST', token: T.ownerToken, body: { content: '<h1>r</h1>', ttl: '1h' } })).json();
     const slug = slugOf(d.url); ownedSlugs.push(slug);
-    const pin = { kind: 'pin', x: 0.1, y: 0.1 };
+    const pin = { kind: 'pin', path: [0], context: '' };
 
     // restricted with per-person roles (array form preserves role), and comments on
     assert.equal((await api(`/api/artifacts/${slug}`, { method: 'PATCH', token: T.ownerToken, body: {
