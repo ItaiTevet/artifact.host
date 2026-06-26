@@ -47,7 +47,9 @@ export function coerceAnchor(raw: unknown): Anchor | null {
   if (!raw || typeof raw !== 'object') return null;
   const v = raw as Record<string, unknown>;
   if (typeof v.x !== 'number' || typeof v.y !== 'number' || !Number.isFinite(v.x) || !Number.isFinite(v.y)) return null;
-  if (v.kind === 'pin') return { kind: 'pin', x: v.x, y: v.y };
-  if (v.kind === 'highlight') return { kind: 'highlight', x: v.x, y: v.y, quote: String(v.quote ?? '') };
+  const x = Math.min(1, Math.max(0, v.x));
+  const y = Math.min(1, Math.max(0, v.y));
+  if (v.kind === 'pin') return { kind: 'pin', x, y };
+  if (v.kind === 'highlight') return { kind: 'highlight', x, y, quote: String(v.quote ?? '').slice(0, 280) };
   return null;
 }
