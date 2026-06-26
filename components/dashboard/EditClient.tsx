@@ -8,6 +8,8 @@ import type { Visibility } from '@/lib/web/deploy';
 import { SignInGate } from './SignInGate';
 import { PasswordField } from '@/components/ui/PasswordField';
 import { HtmlEditor } from '@/components/ui/HtmlEditor';
+import { ShareRoleEditor } from './ShareRoleEditor';
+import type { SharePrincipal } from '@/lib/artifacts/types';
 import styles from '@/app/dashboard/[slug]/edit.module.css';
 
 type Phase = 'loading' | 'signedOut' | 'notFound' | 'ready';
@@ -18,7 +20,9 @@ export function EditClient({ slug }: { slug: string }) {
   const [visibility, setVisibility] = useState<Visibility>('public');
   const [loadedVisibility, setLoadedVisibility] = useState<Visibility>('public');
   const [password, setPassword] = useState('');
-  const [allowlist, setAllowlist] = useState('');
+  const [allowlist, setAllowlist] = useState<SharePrincipal[]>([]);
+  const [commentsEnabled, setCommentsEnabled] = useState(false);
+  const [loadedCommentsEnabled, setLoadedCommentsEnabled] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -34,7 +38,9 @@ export function EditClient({ slug }: { slug: string }) {
       setContent(data.content as string);
       setVisibility(data.visibility as Visibility);
       setLoadedVisibility(data.visibility as Visibility);
-      setAllowlist((data.allowlist as string) ?? '');
+      setAllowlist(Array.isArray(data.allowlist) ? (data.allowlist as SharePrincipal[]) : []);
+      setCommentsEnabled(!!data.comments_enabled);
+      setLoadedCommentsEnabled(!!data.comments_enabled);
       setPhase('ready');
     } catch {
       setPhase('notFound');
@@ -74,6 +80,16 @@ export function EditClient({ slug }: { slug: string }) {
         if (!vres.ok) { setError(editErrorMessage(vdata?.error)); return; }
         setLoadedVisibility(visibility);
       }
+      if (commentsEnabled !== loadedCommentsEnabled) {
+        const cres = await fetch(`/api/artifacts/${slug}`, {
+          method: 'PATCH',
+          headers: { 'content-type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ comments_enabled: commentsEnabled }),
+        });
+        const cdata = await cres.json().catch(() => ({}));
+        if (!cres.ok) { setError(editErrorMessage(cdata?.error)); return; }
+        setLoadedCommentsEnabled(commentsEnabled);
+      }
       setSaved(true);
     } catch {
       setError(editErrorMessage(undefined));
@@ -112,21 +128,19 @@ export function EditClient({ slug }: { slug: string }) {
         )}
         {visibility === 'restricted' && (
           <div style={{ width: '100%', marginTop: 10 }}>
-            <textarea
-              aria-label="Allowed emails and domains"
-              className={styles.textarea}
-              style={{ minHeight: 90 }}
-              placeholder={'Who can view (one per line):\nalice@example.com\n@yourcompany.com'}
-              value={allowlist}
-              onChange={(e) => { setAllowlist(e.target.value); setSaved(false); }}
-            />
-            <p style={{ fontSize: 12, color: 'var(--ink-3)', lineHeight: 1.6, marginTop: 6 }}>
-              Viewers must sign in; an email grants one person, a domain (e.g. <code>@yourcompany.com</code>)
-              grants everyone there. You always have access.
-            </p>
+            <ShareRoleEditor principals={allowlist} onChange={(next) => { setAllowlist(next); setSaved(false); }} />
           </div>
         )}
       </div>
+
+      <label className={styles.label} style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
+        <input
+          type="checkbox"
+          checked={commentsEnabled}
+          onChange={(e) => { setCommentsEnabled(e.target.checked); setSaved(false); }}
+        />
+        Allow comments
+      </label>
 
       {error && <p className={styles.error}>{error}</p>}
       {saved && <p className={styles.saved}>Saved.</p>}
