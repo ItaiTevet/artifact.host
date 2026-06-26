@@ -5,8 +5,6 @@
 .back { font-size: 13px; color: var(--ink-2); }
 .back:hover { color: var(--ink); }
 .label { display: block; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 7px; }
-.textarea { width: 100%; min-height: 320px; resize: vertical; background: #111009; color: #cfc9c0; border: 1px solid var(--rule);
-  border-radius: 6px; padding: 14px 16px; font-family: var(--mono); font-size: 12.5px; line-height: 1.7; }
 .controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 16px 0; }
 .seg { display: flex; border: 1px solid var(--rule); border-radius: 5px; overflow: hidden; }
 .seg button { font-size: 12.5px; padding: 6px 14px; color: var(--ink-2); background: #fff; border: none; cursor: pointer; font: inherit; }

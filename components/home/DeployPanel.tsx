@@ -77,7 +77,7 @@ export function DeployPanel() {
       if (!res.ok) { setError(deployErrorMessage(data?.error)); return; }
 
       if (visibility === 'restricted') {
-        const slug = String(data.url).split('/a/')[1];
+        const slug = data.slug as string;
         const vres = await fetch(`/api/artifacts/${slug}`, {
           method: 'PATCH',
           headers: { ...headers, 'x-edit-token': data.edit_token },
@@ -89,7 +89,7 @@ export function DeployPanel() {
         }
       }
       if (commentsEnabled) {
-        const slug = String(data.url).split('/a/')[1];
+        const slug = data.slug as string;
         // comments_enabled is owner-only — requires the session Bearer (present when signed in).
         const cres = await fetch(`/api/artifacts/${slug}`, {
           method: 'PATCH', headers, body: JSON.stringify({ comments_enabled: true }),
