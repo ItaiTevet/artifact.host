@@ -263,6 +263,23 @@ export async function getOwnArtifact(
   return record;
 }
 
+/** Owner-only toggle for the per-artifact comments master switch. Commenting requires an
+ *  owned artifact (so an agent/owner can manage comments), so edit-token-only callers are denied. */
+export async function setArtifactCommentsEnabled(
+  repo: ArtifactRepository,
+  slug: string,
+  enabled: boolean,
+  auth: AuthContext,
+): Promise<{ ok: true }> {
+  const record = await repo.findBySlug(slug);
+  if (!record) throw new ServiceError('not_found', 'Artifact not found');
+  if (!auth.ownerId || record.ownerId !== auth.ownerId) {
+    throw new ServiceError('forbidden', 'Only the owner can change comment settings');
+  }
+  await repo.setCommentsEnabled(slug, enabled);
+  return { ok: true };
+}
+
 export async function deleteArtifact(
   repo: ArtifactRepository,
   slug: string,

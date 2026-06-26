@@ -1,5 +1,5 @@
 import { getArtifactRepository } from '@/lib/db/factory';
-import { updateArtifact, setVisibility, getOwnArtifact, deleteArtifact } from '@/lib/artifacts/service';
+import { updateArtifact, setVisibility, getOwnArtifact, deleteArtifact, setArtifactCommentsEnabled } from '@/lib/artifacts/service';
 import { ownerIdFromRequest, requireOwner } from '@/lib/http/request-auth';
 import { parsePrincipals, formatPrincipals } from '@/lib/artifacts/sharing';
 import { errorResponse } from '@/lib/http/errors';
@@ -15,6 +15,7 @@ interface PatchBody {
   password?: string | null;
   content?: string;
   edit_token?: string;
+  comments_enabled?: boolean;
 }
 
 // Fetch one artifact's content for the dashboard editor (owner only).
@@ -47,6 +48,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ slug: 
     const auth = { ownerId, editToken };
     const repo = await getArtifactRepository();
 
+    if (typeof body?.comments_enabled === 'boolean') {
+      await setArtifactCommentsEnabled(repo, slug, body.comments_enabled, auth);
+      return Response.json({ ok: true });
+    }
     if (typeof body?.visibility === 'string') {
       const allowlist = typeof body.allowlist === 'string'
         ? parsePrincipals(body.allowlist)
