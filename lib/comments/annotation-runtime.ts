@@ -79,7 +79,7 @@ export function buildAnnotationScript(nonce: string): string {
   }
 
   function render(){
-    layer.innerHTML=''; clearOn();
+    layer.innerHTML='';
     var s=docSize();
     comments.filter(isOpen).forEach(function(c){
       var a=c.anchor||{x:0,y:0};
@@ -101,6 +101,8 @@ export function buildAnnotationScript(nonce: string): string {
 
   function onClick(ev){
     if(mode!=='commenting') return;
+    var path=ev.composedPath?ev.composedPath():[];
+    for(var i=0;i<path.length;i++){ var n=path[i]; if(n&&n.nodeType===1&&n.hasAttribute&&n.hasAttribute('data-ah-pin')) return; }
     ev.preventDefault(); ev.stopPropagation();
     var s=docSize(), x=ev.pageX, y=ev.pageY;
     openComposer({kind:'pin',x:clamp01(x/(s.w||1)),y:clamp01(y/(s.h||1))},x,y);
