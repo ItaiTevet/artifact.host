@@ -40,10 +40,10 @@ describe('sharing roles', () => {
 
 describe('parsePrincipals', () => {
   it('classifies emails and domains, lowercases, de-dupes', () => {
-    const p = parsePrincipals('Alice@Intezer.com, intezer.com\n@partner.com  alice@intezer.com');
+    const p = parsePrincipals('Alice@Example.com, example.com\n@partner.com  alice@example.com');
     expect(p).toEqual([
-      { value: 'alice@intezer.com', type: 'email', role: 'view' },
-      { value: 'intezer.com', type: 'domain', role: 'view' },
+      { value: 'alice@example.com', type: 'email', role: 'view' },
+      { value: 'example.com', type: 'domain', role: 'view' },
       { value: 'partner.com', type: 'domain', role: 'view' },
     ]);
   });
@@ -65,18 +65,18 @@ describe('formatPrincipals', () => {
 });
 
 describe('emailAllowed', () => {
-  const list = parsePrincipals('alice@intezer.com, @intezer.com');
+  const list = parsePrincipals('alice@example.com, @example.com');
   it('matches by exact email or domain', () => {
-    expect(emailAllowed('alice@intezer.com', list)).toBe(true);
-    expect(emailAllowed('BOB@Intezer.com', list)).toBe(true);   // domain match, case-insensitive
+    expect(emailAllowed('alice@example.com', list)).toBe(true);
+    expect(emailAllowed('BOB@Example.com', list)).toBe(true);   // domain match, case-insensitive
     expect(emailAllowed('carol@evil.com', list)).toBe(false);
     expect(emailAllowed(null, list)).toBe(false);
-    expect(emailAllowed('alice@intezer.com', [])).toBe(false);
+    expect(emailAllowed('alice@example.com', [])).toBe(false);
   });
   it('exact-email entry does not allow the whole domain', () => {
-    const onlyAlice = parsePrincipals('alice@intezer.com');
-    expect(emailAllowed('alice@intezer.com', onlyAlice)).toBe(true);
-    expect(emailAllowed('bob@intezer.com', onlyAlice)).toBe(false);
+    const onlyAlice = parsePrincipals('alice@example.com');
+    expect(emailAllowed('alice@example.com', onlyAlice)).toBe(true);
+    expect(emailAllowed('bob@example.com', onlyAlice)).toBe(false);
   });
 });
 

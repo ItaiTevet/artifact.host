@@ -20,9 +20,9 @@ describe('AccountMenu', () => {
   });
 
   it('shows the email, a dashboard link, and a working sign-out when signed in', async () => {
-    getAccountEmail.mockResolvedValue('itaitevet@gmail.com');
+    getAccountEmail.mockResolvedValue('alex@example.com');
     render(<AccountMenu />);
-    await waitFor(() => expect(screen.getByText('itaitevet@gmail.com')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('alex@example.com')).toBeTruthy());
     expect(screen.getByRole('link', { name: /dashboard/i })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /sign out/i }));
     expect(signOut).toHaveBeenCalled();

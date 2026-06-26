@@ -4,9 +4,6 @@ Forward-looking ideas not yet scoped into a spec or plan. Each item here is a
 candidate for its own brainstorm → spec → plan → build cycle when prioritized.
 This file is a backlog, not a commitment; nothing here is in flight.
 
-For active/committed work see `docs/superpowers/specs/` and
-`docs/superpowers/plans/`, and the current state in `docs/superpowers/HANDOFF.md`.
-
 ---
 
 ## Ideas
@@ -36,7 +33,7 @@ Let users edit a deployed artifact directly in the browser instead of re-pasting
 
 ### 4. Remove `supabase.co` from the OAuth sign-in screens
 Today the Google and GitHub sign-in screens display the Supabase callback domain
-(`bjztcxpqchwpdsrgapqp.supabase.co`) — e.g. "to continue to …supabase.co" (Google)
+(`<project-ref>.supabase.co`) — e.g. "to continue to …supabase.co" (Google)
 and "Authorizing will redirect to …supabase.co" (GitHub). App-name branding cannot
 remove this; the domain is intrinsic to where the OAuth callback physically lives.
 - Enable the **Supabase Custom Domain** add-on (paid, ~$10/mo) to serve auth from
@@ -59,8 +56,7 @@ Support Markdown artifacts with full parity to HTML — paste, file upload, and 
 - Goal: parity with HTML across paste / upload / render / highlight, and updating the
   README, `/docs`, and CLI help to document the new format once it ships.
 
-> Note: HTML file upload (formerly item #5) shipped in
-> `docs/superpowers/specs/2026-06-25-batch-a-quick-wins-design.md`.
+> Note: HTML file upload (formerly item #5) has shipped.
 
 ### 6. Homepage "look and feel" video illustration
 Convey the core artifact.host experience — turn HTML into a live link in seconds — which

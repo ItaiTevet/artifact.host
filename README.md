@@ -69,8 +69,8 @@ Pick a provider with `AUTH_PROVIDER`:
 | `supabase` | The hosted cloud build | Supabase project |
 
 **Company Google (GSuite).** Set `AUTH_PROVIDER=oidc`, `OIDC_ISSUER=https://accounts.google.com`,
-your Google OAuth client id/secret, and `ALLOWED_EMAIL_DOMAINS=intezer.com` so only verified
-`@intezer.com` accounts can sign in. The instance is only an OIDC *relying party* (Authorization
+your Google OAuth client id/secret, and `ALLOWED_EMAIL_DOMAINS=example.com` so only verified
+`@example.com` accounts can sign in. The instance is only an OIDC *relying party* (Authorization
 Code + PKCE) — it never runs its own OAuth server. Set the Google OAuth client's redirect URI to
 `<APP_BASE_URL>/api/auth/oidc/callback`.
 
