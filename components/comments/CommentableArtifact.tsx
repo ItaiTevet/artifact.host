@@ -1,25 +1,24 @@
 'use client';
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
-import { getAccessToken } from '@/lib/web/auth';
+import { getAccessToken, getAccountEmail } from '@/lib/web/auth';
 import { buildAnnotationScript } from '@/lib/comments/annotation-runtime';
 import type { Anchor } from '@/lib/artifacts/comment-types';
 import styles from './CommentableArtifact.module.css';
 
-interface Comment { id: string; body: string; anchor: Anchor; author_name: string; resolved: boolean; created_at: string; }
+interface Comment {
+  id: string; body: string; anchor: Anchor; author_name: string; resolved: boolean;
+  created_at: string; can_resolve?: boolean; can_delete?: boolean;
+}
 
 export function CommentableArtifact({ slug, content }: { slug: string; content: string }) {
-  // useId() produces the same value on the server (SSR) and on the client during hydration,
-  // avoiding a mismatch where the iframe's injected nonce (baked at SSR time) would differ
-  // from the React component's closure nonce (generated fresh on the client with randomUUID).
+  // useId() is stable across SSR + hydration, so the iframe's baked nonce matches this closure's.
   const rawId = useId();
   const nonce = rawId.replace(/[^a-z0-9]/gi, '') || 'n';
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [comments, setComments] = useState<Comment[]>([]);
-  const [pending, setPending] = useState<Anchor | null>(null);
-  const [draft, setDraft] = useState('');
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [canPost, setCanPost] = useState(false);
+  const [mode, setMode] = useState<'idle' | 'commenting'>('idle');
 
   const srcDoc = useMemo(() => `${content}\n<script>${buildAnnotationScript(nonce)}</script>`, [content, nonce]);
 
@@ -27,8 +26,14 @@ export function CommentableArtifact({ slug, content }: { slug: string; content: 
     iframeRef.current?.contentWindow?.postMessage({ ...msg, nonce }, '*');
   }, [nonce]);
 
-  const pushPins = useCallback((list: Comment[]) => {
-    toIframe({ type: 'render-pins', pins: list.map((c) => ({ id: c.id, anchor: c.anchor, resolved: c.resolved })) });
+  const pushComments = useCallback((list: Comment[]) => {
+    toIframe({
+      type: 'render-comments',
+      comments: list.filter((c) => !c.resolved).map((c) => ({
+        id: c.id, anchor: c.anchor, body: c.body, author_name: c.author_name,
+        can_resolve: !!c.can_resolve, can_delete: !!c.can_delete,
+      })),
+    });
   }, [toIframe]);
 
   const authHeaders = useCallback(async (json = false): Promise<Record<string, string>> => {
@@ -48,57 +53,57 @@ export function CommentableArtifact({ slug, content }: { slug: string; content: 
     } catch { /* keep prior */ }
   }, [slug, authHeaders]);
 
-  useEffect(() => { void load(); }, [load]);
-  useEffect(() => { pushPins(comments); }, [comments, pushPins]);
-
-  useEffect(() => {
-    function onMessage(ev: MessageEvent) {
-      const fromIframe = ev.source === iframeRef.current?.contentWindow;
-      const d = ev.data as { type?: string; nonce?: string; anchor?: Anchor; id?: string } | null;
-      if (!d || d.nonce !== nonce) return;
-      // `anchor-proposed`/`pin-activated` are intentionally NOT source-gated to the iframe so the
-      // unit + Playwright tests can drive them via window.postMessage. A forged message (from the
-      // sandboxed artifact's own JS) can at most open an empty composer or set the active id — it
-      // can't leak the token/text or persist a comment (Post needs a real token + user action).
-      // Follow-up: client-random nonce + a `fromIframe` gate here (with a test hook). `ready` is gated.
-      if (d.type === 'ready' && fromIframe) pushPins(comments);
-      else if (d.type === 'anchor-proposed' && d.anchor) setPending(d.anchor);
-      else if (d.type === 'pin-activated' && d.id) setActiveId(d.id);
-    }
-    window.addEventListener('message', onMessage);
-    return () => window.removeEventListener('message', onMessage);
-  }, [nonce, comments, pushPins]);
-
-  function startCommenting() { toIframe({ type: 'set-mode', mode: 'commenting' }); }
-
-  async function post() {
-    if (!pending || !draft.trim()) return;
-    const token = await getAccessToken();
-    if (!token) { setError('Sign in to comment.'); return; }
+  const create = useCallback(async (body: string, anchor: Anchor) => {
     const res = await fetch(`/api/artifacts/${encodeURIComponent(slug)}/comments`, {
-      method: 'POST', headers: await authHeaders(true), body: JSON.stringify({ body: draft, anchor: pending }),
-    });
-    if (!res.ok) { setError('Could not post that comment.'); return; }
-    setDraft(''); setPending(null); setError(null);
-    await load();
-  }
-
-  async function toggleResolved(c: Comment) {
-    const res = await fetch(`/api/artifacts/${encodeURIComponent(slug)}/comments/${c.id}`, {
-      method: 'PATCH', headers: await authHeaders(true), body: JSON.stringify({ resolved: !c.resolved }),
+      method: 'POST', headers: await authHeaders(true), body: JSON.stringify({ body, anchor }),
     });
     if (res.ok) await load();
-  }
+  }, [slug, authHeaders, load]);
 
-  async function remove(c: Comment) {
-    const res = await fetch(`/api/artifacts/${encodeURIComponent(slug)}/comments/${c.id}`, {
+  const resolve = useCallback(async (id: string) => {
+    const res = await fetch(`/api/artifacts/${encodeURIComponent(slug)}/comments/${id}`, {
+      method: 'PATCH', headers: await authHeaders(true), body: JSON.stringify({ resolved: true }),
+    });
+    if (res.ok) await load();
+  }, [slug, authHeaders, load]);
+
+  const remove = useCallback(async (id: string) => {
+    const res = await fetch(`/api/artifacts/${encodeURIComponent(slug)}/comments/${id}`, {
       method: 'DELETE', headers: await authHeaders(),
     });
     if (res.ok) await load();
+  }, [slug, authHeaders, load]);
+
+  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { getAccountEmail().then((e) => setCanPost(!!e)).catch(() => setCanPost(false)); }, []);
+  useEffect(() => { pushComments(comments); }, [comments, pushComments]);
+  useEffect(() => { toIframe({ type: 'auth-state', canPost }); }, [canPost, toIframe]);
+
+  useEffect(() => {
+    function onMessage(ev: MessageEvent) {
+      const d = ev.data as { type?: string; nonce?: string; body?: string; anchor?: Anchor; id?: string } | null;
+      if (!d || d.nonce !== nonce) return;
+      if (d.type === 'ready') { toIframe({ type: 'auth-state', canPost }); pushComments(comments); }
+      else if (d.type === 'create-comment' && typeof d.body === 'string' && d.anchor) void create(d.body, d.anchor);
+      else if (d.type === 'resolve-comment' && d.id) void resolve(d.id);
+      else if (d.type === 'delete-comment' && d.id) void remove(d.id);
+      else if (d.type === 'request-signin') window.location.href = '/dashboard';
+    }
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, [nonce, canPost, comments, create, resolve, remove, pushComments, toIframe]);
+
+  function toggleMode() {
+    const next = mode === 'commenting' ? 'idle' : 'commenting';
+    setMode(next);
+    toIframe({ type: 'set-mode', mode: next });
   }
 
+  const openCount = comments.filter((c) => !c.resolved).length;
+  const pillLabel = mode === 'commenting' ? 'Click the page to comment' : (openCount > 0 ? String(openCount) : 'Comment');
+
   return (
-    <div className={styles.root} data-testid="ca-root" data-nonce={nonce}>
+    <div className={styles.root}>
       <iframe
         ref={iframeRef}
         title="artifact"
@@ -106,44 +111,14 @@ export function CommentableArtifact({ slug, content }: { slug: string; content: 
         sandbox="allow-scripts allow-popups allow-forms"
         className={styles.frame}
       />
-      <aside className={styles.sidebar}>
-        <div className={styles.head}>
-          <span className={styles.title}>Comments</span>
-          <button type="button" className={styles.add} onClick={startCommenting}>+ Add comment</button>
-        </div>
-
-        {pending && (
-          <div className={styles.composer}>
-            <textarea
-              className={styles.input}
-              placeholder="Add a comment…"
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-            />
-            <div className={styles.composerRow}>
-              <button type="button" className={styles.ghost} onClick={() => { setPending(null); setDraft(''); }}>Cancel</button>
-              <button type="button" className={styles.post} onClick={() => void post()}>Post</button>
-            </div>
-          </div>
-        )}
-
-        {error && <p className={styles.error}>{error}</p>}
-
-        <ul className={styles.list}>
-          {comments.length === 0 && <li className={styles.empty}>No comments yet. Click &ldquo;Add comment&rdquo;, then click on the page.</li>}
-          {comments.map((c) => (
-            <li key={c.id} className={`${styles.item} ${c.id === activeId ? styles.active : ''} ${c.resolved ? styles.resolved : ''}`}>
-              <div className={styles.meta}><span className={styles.author}>{c.author_name}</span>{c.resolved && <span className={styles.badge}>resolved</span>}</div>
-              {c.anchor.kind === 'highlight' && c.anchor.quote && <div className={styles.quote}>&ldquo;{c.anchor.quote}&rdquo;</div>}
-              <div className={styles.body}>{c.body}</div>
-              <div className={styles.actions}>
-                <button type="button" onClick={() => void toggleResolved(c)}>{c.resolved ? 'Reopen' : 'Resolve'}</button>
-                <button type="button" onClick={() => void remove(c)}>Delete</button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </aside>
+      <button
+        type="button"
+        className={`${styles.pill} ${mode === 'commenting' ? styles.pillOn : ''}`}
+        aria-pressed={mode === 'commenting'}
+        onClick={toggleMode}
+      >
+        💬 {pillLabel}
+      </button>
     </div>
   );
 }
