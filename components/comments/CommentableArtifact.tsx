@@ -19,6 +19,8 @@ export function CommentableArtifact({ slug, content }: { slug: string; content: 
   const [comments, setComments] = useState<Comment[]>([]);
   const [canPost, setCanPost] = useState(false);
   const [mode, setMode] = useState<'idle' | 'commenting'>('idle');
+  const [cardOpen, setCardOpen] = useState(false);
+  const [mobile, setMobile] = useState(false);
 
   const srcDoc = useMemo(() => `${content}\n<script>${buildAnnotationScript(nonce)}</script>`, [content, nonce]);
 
@@ -75,13 +77,22 @@ export function CommentableArtifact({ slug, content }: { slug: string; content: 
   }, [slug, authHeaders, load]);
 
   useEffect(() => { void load(); }, [load]);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 600px), (pointer: coarse)');
+    const sync = () => setMobile(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
+
   useEffect(() => { getAccountEmail().then((e) => setCanPost(!!e)).catch(() => setCanPost(false)); }, []);
   useEffect(() => { pushComments(comments); }, [comments, pushComments]);
   useEffect(() => { toIframe({ type: 'auth-state', canPost }); }, [canPost, toIframe]);
 
   useEffect(() => {
     function onMessage(ev: MessageEvent) {
-      const d = ev.data as { type?: string; nonce?: string; body?: string; anchor?: Anchor; id?: string } | null;
+      const d = ev.data as { type?: string; nonce?: string; body?: string; anchor?: Anchor; id?: string; open?: boolean } | null;
       if (!d || d.nonce !== nonce) return;
       // `ready` is intentionally not source-gated (nonce-filtered only) so tests can drive it via window.postMessage; a forged `ready` is harmless (it only re-sends state INTO the iframe).
       if (d.type === 'ready') { toIframe({ type: 'auth-state', canPost }); pushComments(comments); }
@@ -89,6 +100,7 @@ export function CommentableArtifact({ slug, content }: { slug: string; content: 
       else if (d.type === 'resolve-comment' && d.id) void resolve(d.id);
       else if (d.type === 'delete-comment' && d.id) void remove(d.id);
       else if (d.type === 'request-signin') window.location.href = '/dashboard';
+      else if (d.type === 'card' && typeof d.open === 'boolean') setCardOpen(d.open);
     }
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
@@ -112,14 +124,16 @@ export function CommentableArtifact({ slug, content }: { slug: string; content: 
         sandbox="allow-scripts allow-popups allow-forms"
         className={styles.frame}
       />
-      <button
-        type="button"
-        className={`${styles.pill} ${mode === 'commenting' ? styles.pillOn : ''}`}
-        aria-pressed={mode === 'commenting'}
-        onClick={toggleMode}
-      >
-        💬 {pillLabel}
-      </button>
+      {!(mobile && cardOpen) && (
+        <button
+          type="button"
+          className={`${styles.pill} ${mode === 'commenting' ? styles.pillOn : ''}`}
+          aria-pressed={mode === 'commenting'}
+          onClick={toggleMode}
+        >
+          💬 {pillLabel}
+        </button>
+      )}
     </div>
   );
 }
