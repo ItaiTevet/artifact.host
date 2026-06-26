@@ -58,18 +58,20 @@ export async function listComments(
  *  Pure/synchronous — takes already-fetched records. Booleans only; never leaks identity. */
 export function commentCaps(
   record: ArtifactRecord, comment: CommentRecord, ctx: ReadContext,
-): { canResolve: boolean; canDelete: boolean } {
+): { canResolve: boolean; canDelete: boolean; canEdit: boolean } {
   const owner = isOwner(record, ctx.viewer);
   const readable = canRead(record, ctx);
+  const isAuthor = !!ctx.viewer && ctx.viewer.ownerId === comment.authorId;
   return {
     canResolve: owner || (readable && canComment(record, ctx.viewer)),
-    canDelete: owner || (readable && !!ctx.viewer && ctx.viewer.ownerId === comment.authorId),
+    canDelete: owner || (readable && isAuthor),
+    canEdit: readable && isAuthor,
   };
 }
 
 export interface CommentWithCaps {
   comment: CommentRecord;
-  caps: { canResolve: boolean; canDelete: boolean };
+  caps: { canResolve: boolean; canDelete: boolean; canEdit: boolean };
 }
 
 /** List comments for a viewer, each tagged with that viewer's capabilities. Read gate identical

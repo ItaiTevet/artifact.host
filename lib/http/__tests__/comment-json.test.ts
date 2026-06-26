@@ -36,9 +36,13 @@ describe('commentToJson capability flags', () => {
     expect(commentToJson(rec)).not.toHaveProperty('can_resolve');
   });
   it('includes caps when provided, still no email/id', () => {
-    const json = commentToJson(rec, { canResolve: true, canDelete: false });
+    const json = commentToJson(rec, { canResolve: true, canDelete: false, canEdit: false });
     expect(json).toMatchObject({ can_resolve: true, can_delete: false });
     expect(JSON.stringify(json)).not.toContain('alice@example.com');
     expect(JSON.stringify(json)).not.toContain('owner-uuid');
+  });
+  it('includes can_edit', () => {
+    const json = commentToJson(rec, { canResolve: true, canDelete: true, canEdit: true });
+    expect((json as { can_edit?: boolean }).can_edit).toBe(true);
   });
 });
