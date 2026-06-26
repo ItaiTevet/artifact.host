@@ -160,7 +160,7 @@ export function buildAnnotationScript(nonce: string): string {
     if(sticky==='__composer__') return;
     var sel=window.getSelection&&window.getSelection(); if(sel&&!sel.isCollapsed) return; // a selection → highlight, not a pin
     var path=ev.composedPath?ev.composedPath():[];
-    for(var i=0;i<path.length;i++){ var n=path[i]; if(n&&n.nodeType===1&&n.hasAttribute&&(n.hasAttribute('data-ah-pin')||n.className==='selbtn')) return; }
+    for(var i=0;i<path.length;i++){ var n=path[i]; if(n&&(n===selBtn||(n.nodeType===1&&n.hasAttribute&&n.hasAttribute('data-ah-pin')))) return; }
     ev.preventDefault(); ev.stopPropagation();
     var s=docSize(), x=ev.pageX, y=ev.pageY;
     openComposer({kind:'pin',x:clamp01(x/(s.w||1)),y:clamp01(y/(s.h||1))},x,y);
@@ -179,7 +179,7 @@ export function buildAnnotationScript(nonce: string): string {
   document.addEventListener('pointerup',onSelChange);
   document.addEventListener('click',onOutside,false);
   window.addEventListener('keydown',function(e){ if(e.key==='Escape') hidePop(); });
-  window.addEventListener('resize',function(){ layer.classList.toggle('touch',mobile()); render(); });
+  window.addEventListener('resize',function(){ layer.classList.toggle('touch',mobile()); render(); if(pop.style.display!=='none') hidePop(); });
   if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',ready); } else { ready(); }
 })();`;
 }
