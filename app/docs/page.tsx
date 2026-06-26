@@ -67,9 +67,11 @@ x-edit-token: <token>
         <h2 className={styles.h2}>Comments</h2>
         <p className={styles.p}>
           Owners enable comments per artifact with the <strong>Allow comments</strong> toggle (deploy
-          panel or dashboard editor). Signed-in viewers annotate the rendered page in place: click{' '}
-          <strong>Add comment</strong> to drop a pin, or select text to attach a highlight. Comments
-          appear in a side panel; the owner can resolve or delete any comment.
+          panel or dashboard editor). Signed-in viewers see comment <strong>pins</strong> rendered
+          directly on the page — hover a pin to read the comment, or click the{' '}
+          <strong>💬 pill</strong> (bottom-right) to enter comment mode: click anywhere to drop a
+          pin, or select text to attach a highlight. Resolved comments are hidden in-page; list or
+          reopen them via the API or CLI.
         </p>
         <p className={styles.p}>
           <strong>Permissions:</strong> reading comments is open to anyone who can view the artifact.

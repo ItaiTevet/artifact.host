@@ -22,9 +22,10 @@ Point it at your own instance with `--host https://artifacts.your-co.com` (or
 ## Comments & collaboration
 
 Owners turn comments on per artifact via the **Allow comments** toggle (deploy panel or
-dashboard editor). Signed-in viewers can then annotate the rendered page in place — click
-**Add comment** to drop a pin, or select text to attach a highlight — and resolve or delete
-them in the side panel.
+dashboard editor). Signed-in viewers see comment **pins** rendered directly on the page —
+hover a pin to read the comment, or click the **💬 pill** (bottom-right) to enter comment
+mode: click anywhere to drop a pin, or select text to attach a highlight. Resolved comments
+are hidden in-page; list or reopen them via the API or CLI.
 
 On public and password-protected artifacts any signed-in viewer can post. On **restricted**
 artifacts each invited person gets a **View** or **Comment** role (set in the share editor).
