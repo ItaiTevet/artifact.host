@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { InMemoryRepository } from '@/lib/artifacts/__tests__/in-memory-repository';
 import { InMemoryCommentRepository } from '@/lib/artifacts/__tests__/in-memory-comment-repository';
-import { createComment, listComments, editCommentBody, resolveComment, deleteComment } from '@/lib/artifacts/comment-service';
+import { createComment, listComments, editCommentBody, resolveComment, deleteComment, commentCaps, listCommentsForViewer } from '@/lib/artifacts/comment-service';
 import type { Anchor } from '@/lib/artifacts/comment-types';
 
 const pin: Anchor = { kind: 'pin', x: 0.5, y: 0.5 };
@@ -84,5 +84,66 @@ describe('comment-service authorization', () => {
     const r = await resolveComment(artifacts, comments, 's1', c.id, true, ctx(OWNER));
     expect(r.resolved).toBe(true);
     expect(await deleteComment(artifacts, comments, 's1', c.id, ctx(OWNER))).toEqual({ ok: true });
+  });
+});
+
+describe('commentCaps', () => {
+  it('owner: can resolve and delete any comment', async () => {
+    const { artifacts, comments } = await seed({ visibility: 'public', commentsEnabled: true });
+    const c = await createComment(artifacts, comments, 's1', { body: 'hi', anchor: pin }, ctx({ ownerId: 'rando', email: 'r@x.com' }));
+    const rec = await artifacts.findBySlug('s1');
+    expect(commentCaps(rec!, c, OWNER)).toEqual({ canResolve: true, canDelete: true });
+  });
+
+  it('author (non-owner, public): can resolve and delete own comment', async () => {
+    const { artifacts, comments } = await seed({ visibility: 'public', commentsEnabled: true });
+    const author = { ownerId: 'rando', email: 'r@x.com' };
+    const c = await createComment(artifacts, comments, 's1', { body: 'hi', anchor: pin }, ctx(author));
+    const rec = await artifacts.findBySlug('s1');
+    expect(commentCaps(rec!, c, author)).toEqual({ canResolve: true, canDelete: true });
+  });
+
+  it('other commenter (public): can resolve but not delete someone else’s comment', async () => {
+    const { artifacts, comments } = await seed({ visibility: 'public', commentsEnabled: true });
+    const c = await createComment(artifacts, comments, 's1', { body: 'hi', anchor: pin }, ctx({ ownerId: 'a', email: 'a@x.com' }));
+    const rec = await artifacts.findBySlug('s1');
+    expect(commentCaps(rec!, c, { ownerId: 'b', email: 'b@x.com' })).toEqual({ canResolve: true, canDelete: false });
+  });
+
+  it('anonymous: cannot resolve or delete', async () => {
+    const { artifacts, comments } = await seed({ visibility: 'public', commentsEnabled: true });
+    const c = await createComment(artifacts, comments, 's1', { body: 'hi', anchor: pin }, ctx(OWNER));
+    const rec = await artifacts.findBySlug('s1');
+    expect(commentCaps(rec!, c, null)).toEqual({ canResolve: false, canDelete: false });
+  });
+
+  it('restricted view-only role: cannot resolve or delete', async () => {
+    const { artifacts, comments } = await seed({
+      visibility: 'restricted', commentsEnabled: true,
+      allowlist: [{ value: 'v@x.com', type: 'email', role: 'view' }],
+    });
+    const c = await createComment(artifacts, comments, 's1', { body: 'hi', anchor: pin }, ctx(OWNER));
+    const rec = await artifacts.findBySlug('s1');
+    expect(commentCaps(rec!, c, { ownerId: 'v', email: 'v@x.com' })).toEqual({ canResolve: false, canDelete: false });
+  });
+});
+
+describe('listCommentsForViewer', () => {
+  it('returns each comment with its caps for the viewer', async () => {
+    const { artifacts, comments } = await seed({ visibility: 'public', commentsEnabled: true });
+    await createComment(artifacts, comments, 's1', { body: 'hi', anchor: pin }, ctx({ ownerId: 'rando', email: 'r@x.com' }));
+    const rows = await listCommentsForViewer(artifacts, comments, 's1', ctx(OWNER));
+    expect(rows).toHaveLength(1);
+    expect(rows[0].caps).toEqual({ canResolve: true, canDelete: true });
+    expect(rows[0].comment.body).toBe('hi');
+  });
+
+  it('rejects when the viewer cannot read the artifact', async () => {
+    const { artifacts, comments } = await seed({
+      visibility: 'restricted', commentsEnabled: true,
+      allowlist: [{ value: 'v@x.com', type: 'email', role: 'view' }],
+    });
+    await expect(listCommentsForViewer(artifacts, comments, 's1', ctx(null)))
+      .rejects.toMatchObject({ code: 'forbidden' });
   });
 });

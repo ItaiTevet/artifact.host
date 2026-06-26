@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { getArtifactRepository, getCommentRepository } from '@/lib/db/factory';
-import { listComments, createComment } from '@/lib/artifacts/comment-service';
+import { listCommentsForViewer, createComment } from '@/lib/artifacts/comment-service';
 import { viewerFromRequest } from '@/lib/http/request-auth';
 import { cookieName, verifyPasswordCookie } from '@/lib/http/cookies';
 import { errorResponse } from '@/lib/http/errors';
@@ -27,8 +27,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
     const ctx = await readContext(req, slug);
     const artifacts = await getArtifactRepository();
     const comments = await getCommentRepository();
-    const list = await listComments(artifacts, comments, slug, ctx);
-    return Response.json({ comments: list.map(commentToJson) });
+    const list = await listCommentsForViewer(artifacts, comments, slug, ctx);
+    return Response.json({ comments: list.map(({ comment, caps }) => commentToJson(comment, caps)) });
   } catch (err) {
     return errorResponse(err);
   }

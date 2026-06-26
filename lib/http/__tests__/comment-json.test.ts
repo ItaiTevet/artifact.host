@@ -26,3 +26,19 @@ describe('commentToJson', () => {
     expect(JSON.stringify(json)).not.toContain('owner-uuid');
   });
 });
+
+describe('commentToJson capability flags', () => {
+  const rec: CommentRecord = {
+    id: 'c1', artifactSlug: 's1', authorId: 'owner-uuid', authorEmail: 'alice@example.com',
+    body: 'hi', anchor: { kind: 'pin', x: 0.5, y: 0.5 }, resolved: false, createdAt: new Date('2026-06-26T00:00:00Z'),
+  };
+  it('omits caps when none provided (back-compat)', () => {
+    expect(commentToJson(rec)).not.toHaveProperty('can_resolve');
+  });
+  it('includes caps when provided, still no email/id', () => {
+    const json = commentToJson(rec, { canResolve: true, canDelete: false });
+    expect(json).toMatchObject({ can_resolve: true, can_delete: false });
+    expect(JSON.stringify(json)).not.toContain('alice@example.com');
+    expect(JSON.stringify(json)).not.toContain('owner-uuid');
+  });
+});

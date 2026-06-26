@@ -45,6 +45,35 @@ export async function listComments(
   return comments.listBySlug(slug);
 }
 
+/** UI-facing capabilities for the viewer on a single comment. Mirrors resolveComment/deleteComment
+ *  authz exactly so the rendered buttons match what the service will enforce. Booleans only —
+ *  never leaks identity. */
+export function commentCaps(
+  record: ArtifactRecord, comment: CommentRecord, viewer: Viewer | null,
+): { canResolve: boolean; canDelete: boolean } {
+  const owner = isOwner(record, viewer);
+  return {
+    canResolve: owner || canComment(record, viewer),
+    canDelete: (!!viewer && viewer.ownerId === comment.authorId) || owner,
+  };
+}
+
+export interface CommentWithCaps {
+  comment: CommentRecord;
+  caps: { canResolve: boolean; canDelete: boolean };
+}
+
+/** List comments for a viewer, each tagged with that viewer's capabilities. Read gate identical
+ *  to listComments. */
+export async function listCommentsForViewer(
+  artifacts: ArtifactRepository, comments: CommentRepository, slug: string, ctx: ReadContext,
+): Promise<CommentWithCaps[]> {
+  const record = loadEnabled(await artifacts.findBySlug(slug));
+  if (!canRead(record, ctx)) throw new ServiceError('forbidden', 'Not authorized to view this artifact');
+  const rows = await comments.listBySlug(slug);
+  return rows.map((c) => ({ comment: c, caps: commentCaps(record, c, ctx.viewer) }));
+}
+
 export async function createComment(
   artifacts: ArtifactRepository, comments: CommentRepository, slug: string,
   input: { body: string; anchor: Anchor }, ctx: ReadContext,

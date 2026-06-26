@@ -8,9 +8,10 @@ export function authorName(email: string | null): string {
   return local || 'User';
 }
 
-/** Snake_case wire shape for a comment. Emails and internal author ids are never exposed. */
-export function commentToJson(c: CommentRecord) {
-  return {
+/** Snake_case wire shape for a comment. Emails and internal author ids are never exposed.
+ *  `caps` (optional) adds viewer-relative `can_resolve`/`can_delete` booleans for UI gating. */
+export function commentToJson(c: CommentRecord, caps?: { canResolve: boolean; canDelete: boolean }) {
+  const base = {
     id: c.id,
     body: c.body,
     anchor: c.anchor,
@@ -18,4 +19,5 @@ export function commentToJson(c: CommentRecord) {
     resolved: c.resolved,
     created_at: c.createdAt.toISOString(),
   };
+  return caps ? { ...base, can_resolve: caps.canResolve, can_delete: caps.canDelete } : base;
 }
