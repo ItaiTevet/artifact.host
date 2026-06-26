@@ -37,24 +37,33 @@ export function canComment(record: ArtifactRecord, viewer: Viewer | null): boole
   return true; // public / password, signed in
 }
 
+/** Load a comment-enabled artifact and assert the caller may read it. */
+async function loadReadableRecord(
+  artifacts: ArtifactRepository, slug: string, ctx: ReadContext,
+): Promise<ArtifactRecord> {
+  const record = loadEnabled(await artifacts.findBySlug(slug));
+  if (!canRead(record, ctx)) throw new ServiceError('forbidden', 'Not authorized to view this artifact');
+  return record;
+}
+
 export async function listComments(
   artifacts: ArtifactRepository, comments: CommentRepository, slug: string, ctx: ReadContext,
 ): Promise<CommentRecord[]> {
-  const record = loadEnabled(await artifacts.findBySlug(slug));
-  if (!canRead(record, ctx)) throw new ServiceError('forbidden', 'Not authorized to view this artifact');
+  await loadReadableRecord(artifacts, slug, ctx);
   return comments.listBySlug(slug);
 }
 
 /** UI-facing capabilities for the viewer on a single comment. Mirrors resolveComment/deleteComment
- *  authz exactly so the rendered buttons match what the service will enforce. Booleans only —
- *  never leaks identity. */
+ *  authz exactly (each gates on canRead first), so rendered buttons match what the service enforces.
+ *  Pure/synchronous — takes already-fetched records. Booleans only; never leaks identity. */
 export function commentCaps(
-  record: ArtifactRecord, comment: CommentRecord, viewer: Viewer | null,
+  record: ArtifactRecord, comment: CommentRecord, ctx: ReadContext,
 ): { canResolve: boolean; canDelete: boolean } {
-  const owner = isOwner(record, viewer);
+  const owner = isOwner(record, ctx.viewer);
+  const readable = canRead(record, ctx);
   return {
-    canResolve: owner || canComment(record, viewer),
-    canDelete: (!!viewer && viewer.ownerId === comment.authorId) || owner,
+    canResolve: owner || (readable && canComment(record, ctx.viewer)),
+    canDelete: owner || (readable && !!ctx.viewer && ctx.viewer.ownerId === comment.authorId),
   };
 }
 
@@ -68,10 +77,9 @@ export interface CommentWithCaps {
 export async function listCommentsForViewer(
   artifacts: ArtifactRepository, comments: CommentRepository, slug: string, ctx: ReadContext,
 ): Promise<CommentWithCaps[]> {
-  const record = loadEnabled(await artifacts.findBySlug(slug));
-  if (!canRead(record, ctx)) throw new ServiceError('forbidden', 'Not authorized to view this artifact');
+  const record = await loadReadableRecord(artifacts, slug, ctx);
   const rows = await comments.listBySlug(slug);
-  return rows.map((c) => ({ comment: c, caps: commentCaps(record, c, ctx.viewer) }));
+  return rows.map((c) => ({ comment: c, caps: commentCaps(record, c, ctx) }));
 }
 
 export async function createComment(

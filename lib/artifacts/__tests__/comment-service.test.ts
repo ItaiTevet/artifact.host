@@ -92,7 +92,7 @@ describe('commentCaps', () => {
     const { artifacts, comments } = await seed({ visibility: 'public', commentsEnabled: true });
     const c = await createComment(artifacts, comments, 's1', { body: 'hi', anchor: pin }, ctx({ ownerId: 'rando', email: 'r@x.com' }));
     const rec = await artifacts.findBySlug('s1');
-    expect(commentCaps(rec!, c, OWNER)).toEqual({ canResolve: true, canDelete: true });
+    expect(commentCaps(rec!, c, ctx(OWNER))).toEqual({ canResolve: true, canDelete: true });
   });
 
   it('author (non-owner, public): can resolve and delete own comment', async () => {
@@ -100,21 +100,21 @@ describe('commentCaps', () => {
     const author = { ownerId: 'rando', email: 'r@x.com' };
     const c = await createComment(artifacts, comments, 's1', { body: 'hi', anchor: pin }, ctx(author));
     const rec = await artifacts.findBySlug('s1');
-    expect(commentCaps(rec!, c, author)).toEqual({ canResolve: true, canDelete: true });
+    expect(commentCaps(rec!, c, ctx(author))).toEqual({ canResolve: true, canDelete: true });
   });
 
-  it('other commenter (public): can resolve but not delete someone else’s comment', async () => {
+  it("other commenter (public): can resolve but not delete someone else's comment", async () => {
     const { artifacts, comments } = await seed({ visibility: 'public', commentsEnabled: true });
     const c = await createComment(artifacts, comments, 's1', { body: 'hi', anchor: pin }, ctx({ ownerId: 'a', email: 'a@x.com' }));
     const rec = await artifacts.findBySlug('s1');
-    expect(commentCaps(rec!, c, { ownerId: 'b', email: 'b@x.com' })).toEqual({ canResolve: true, canDelete: false });
+    expect(commentCaps(rec!, c, ctx({ ownerId: 'b', email: 'b@x.com' }))).toEqual({ canResolve: true, canDelete: false });
   });
 
   it('anonymous: cannot resolve or delete', async () => {
     const { artifacts, comments } = await seed({ visibility: 'public', commentsEnabled: true });
     const c = await createComment(artifacts, comments, 's1', { body: 'hi', anchor: pin }, ctx(OWNER));
     const rec = await artifacts.findBySlug('s1');
-    expect(commentCaps(rec!, c, null)).toEqual({ canResolve: false, canDelete: false });
+    expect(commentCaps(rec!, c, ctx(null))).toEqual({ canResolve: false, canDelete: false });
   });
 
   it('restricted view-only role: cannot resolve or delete', async () => {
@@ -124,7 +124,15 @@ describe('commentCaps', () => {
     });
     const c = await createComment(artifacts, comments, 's1', { body: 'hi', anchor: pin }, ctx(OWNER));
     const rec = await artifacts.findBySlug('s1');
-    expect(commentCaps(rec!, c, { ownerId: 'v', email: 'v@x.com' })).toEqual({ canResolve: false, canDelete: false });
+    expect(commentCaps(rec!, c, ctx({ ownerId: 'v', email: 'v@x.com' }))).toEqual({ canResolve: false, canDelete: false });
+  });
+
+  it('password artifact, signed-in but not verified: cannot resolve', async () => {
+    const { artifacts, comments } = await seed({ visibility: 'password', commentsEnabled: true, passwordHash: 'h' });
+    const c = await createComment(artifacts, comments, 's1', { body: 'hi', anchor: pin }, ctx(OWNER, false));
+    const rec = await artifacts.findBySlug('s1');
+    expect(commentCaps(rec!, c, ctx({ ownerId: 'rando', email: 'r@x.com' }, false)))
+      .toEqual({ canResolve: false, canDelete: false });
   });
 });
 
@@ -145,5 +153,12 @@ describe('listCommentsForViewer', () => {
     });
     await expect(listCommentsForViewer(artifacts, comments, 's1', ctx(null)))
       .rejects.toMatchObject({ code: 'forbidden' });
+  });
+
+  it('non-owner third party gets correct caps (can resolve, cannot delete others)', async () => {
+    const { artifacts, comments } = await seed({ visibility: 'public', commentsEnabled: true });
+    await createComment(artifacts, comments, 's1', { body: 'hi', anchor: pin }, ctx({ ownerId: 'a', email: 'a@x.com' }));
+    const rows = await listCommentsForViewer(artifacts, comments, 's1', ctx({ ownerId: 'b', email: 'b@x.com' }));
+    expect(rows[0].caps).toEqual({ canResolve: true, canDelete: false });
   });
 });
