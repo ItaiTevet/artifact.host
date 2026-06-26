@@ -43,7 +43,14 @@ export function buildAnnotationScript(nonce: string): string {
   function hidePop(){ pop.style.display='none'; sticky=null; clearOn(); }
   function scheduleHide(){ clearTimeout(hideTimer); hideTimer=setTimeout(function(){ if(!sticky) hidePop(); },200); }
   function cancelHide(){ clearTimeout(hideTimer); }
-  function place(x,y){ var s=docSize(); var left=Math.min(x+8, s.w-290); pop.style.left=Math.max(4,left)+'px'; pop.style.top=(y+8)+'px'; }
+  function place(x,y){
+    pop.style.display='block';
+    var pw=pop.offsetWidth||280, ph=pop.offsetHeight||0;
+    var vw=window.innerWidth, vh=window.innerHeight, sx=window.scrollX, sy=window.scrollY;
+    var left=x+8; if(left+pw>sx+vw-4) left=x-pw-8; if(left<sx+4) left=sx+4;
+    var top=y+8; if(top+ph>sy+vh-4) top=y-ph-8; if(top<sy+4) top=sy+4;
+    pop.style.left=left+'px'; pop.style.top=top+'px';
+  }
 
   function showTooltip(c,x,y,makeSticky){
     cancelHide();
@@ -101,22 +108,22 @@ export function buildAnnotationScript(nonce: string): string {
 
   function onClick(ev){
     if(mode!=='commenting') return;
+    if(sticky==='__composer__') return; // don't clobber an open composer
     var path=ev.composedPath?ev.composedPath():[];
     for(var i=0;i<path.length;i++){ var n=path[i]; if(n&&n.nodeType===1&&n.hasAttribute&&n.hasAttribute('data-ah-pin')) return; }
     ev.preventDefault(); ev.stopPropagation();
     var s=docSize(), x=ev.pageX, y=ev.pageY;
     openComposer({kind:'pin',x:clamp01(x/(s.w||1)),y:clamp01(y/(s.h||1))},x,y);
-    setMode('idle');
   }
   function onMouseUp(){
     if(mode!=='commenting') return;
+    if(sticky==='__composer__') return;
     var sel=window.getSelection&&window.getSelection(); if(!sel||sel.isCollapsed) return;
     var q=String(sel).trim(); if(!q) return;
     var rect=sel.getRangeAt(0).getBoundingClientRect(), s=docSize();
     var x=rect.left+window.scrollX+rect.width/2, y=rect.top+window.scrollY;
     try{ sel.removeAllRanges(); }catch(e){}
     openComposer({kind:'highlight',x:clamp01(x/(s.w||1)),y:clamp01(y/(s.h||1)),quote:q.slice(0,280)},x,y);
-    setMode('idle');
   }
   function onOutside(ev){ if(sticky&&ev.target!==host) hidePop(); }
 
