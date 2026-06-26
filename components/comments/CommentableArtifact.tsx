@@ -104,7 +104,7 @@ export function CommentableArtifact({ slug, content }: { slug: string; content: 
   const pillLabel = mode === 'commenting' ? 'Click the page to comment' : (openCount > 0 ? String(openCount) : 'Comment');
 
   return (
-    <div className={styles.root}>
+    <div className={styles.root} data-testid="ca-root" data-nonce={nonce}>
       <iframe
         ref={iframeRef}
         title="artifact"
