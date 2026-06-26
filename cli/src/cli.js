@@ -119,7 +119,7 @@ export async function run(argv) {
       if (flags.json) { process.stdout.write(`${JSON.stringify(items, null, 2)}\n`); return; }
       if (!items.length) { process.stdout.write('No comments.\n'); return; }
       for (const c of items) {
-        const who = c.author_email || c.author_id;
+        const who = c.author_name || 'someone';
         const status = c.resolved ? 'resolved' : 'open';
         const where = c.anchor?.kind === 'highlight'
           ? `"${String(c.anchor.quote || '').slice(0, 30)}"`
