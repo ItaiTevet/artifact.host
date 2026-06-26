@@ -2,7 +2,7 @@ import {
   loadConfig, resolveHost, resolveToken, clearToken, CONFIG_PATH, DEFAULT_HOST,
 } from './config.js';
 import { loginViaBrowser, loginWithToken } from './auth.js';
-import { deploy, list, update, remove, setVisibility } from './commands.js';
+import { deploy, list, update, remove, setVisibility, comments } from './commands.js';
 
 const HELP = `artifact — deploy HTML to artifact.host (or your self-hosted instance)
 
@@ -13,6 +13,7 @@ Usage:
 
   artifact deploy <file.html> [--ttl 7d] [--visibility public|password] [--password PW]
   artifact list                                     List your artifacts (requires auth)
+  artifact comments <slug> [--json]                 List comments on an artifact (requires auth)
   artifact update <slug> <file.html> [--edit-token TOKEN]   Replace an artifact's HTML
   artifact visibility <slug> public|password [--password PW] [--edit-token TOKEN]
   artifact delete <slug>                            Delete an artifact (requires auth)
@@ -106,6 +107,24 @@ export async function run(argv) {
       if (!items.length) { process.stdout.write('No artifacts.\n'); return; }
       for (const a of items) {
         process.stdout.write(`${a.slug}\t${a.visibility}\t${a.view_count} views\t${a.title ?? ''}\n`);
+      }
+      return;
+    }
+
+    case 'comments': {
+      const slug = rest[0];
+      if (!slug) throw new Error('usage: artifact comments <slug> [--json]');
+      const { host, token } = await ctx(flags);
+      const items = await comments(host, requireToken(token), slug);
+      if (flags.json) { process.stdout.write(`${JSON.stringify(items, null, 2)}\n`); return; }
+      if (!items.length) { process.stdout.write('No comments.\n'); return; }
+      for (const c of items) {
+        const who = c.author_email || c.author_id;
+        const status = c.resolved ? 'resolved' : 'open';
+        const where = c.anchor?.kind === 'highlight'
+          ? `"${String(c.anchor.quote || '').slice(0, 30)}"`
+          : `@${Math.round((c.anchor?.x ?? 0) * 100)}%,${Math.round((c.anchor?.y ?? 0) * 100)}%`;
+        process.stdout.write(`[${status}]\t${who}\t${where}\t${String(c.body).replace(/\s+/g, ' ')}\n`);
       }
       return;
     }

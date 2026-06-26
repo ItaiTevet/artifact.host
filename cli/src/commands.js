@@ -37,3 +37,8 @@ export async function setVisibility(host, auth, slug, visibility, password) {
   if (visibility === 'password') body.password = password;
   return apiFetch(host, `/api/artifacts/${encodeURIComponent(slug)}`, { method: 'PATCH', ...auth, body });
 }
+
+export async function comments(host, token, slug) {
+  const res = await apiFetch(host, `/api/artifacts/${encodeURIComponent(slug)}/comments`, { token });
+  return res.comments || [];
+}
