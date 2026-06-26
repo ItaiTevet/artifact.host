@@ -42,3 +42,9 @@ export async function comments(host, token, slug) {
   const res = await apiFetch(host, `/api/artifacts/${encodeURIComponent(slug)}/comments`, { token });
   return res.comments || [];
 }
+
+export async function editComment(host, token, slug, id, body) {
+  return apiFetch(host, `/api/artifacts/${encodeURIComponent(slug)}/comments/${encodeURIComponent(id)}`, {
+    method: 'PATCH', token, body: { body },
+  });
+}

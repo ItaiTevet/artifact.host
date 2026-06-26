@@ -2,7 +2,7 @@ import {
   loadConfig, resolveHost, resolveToken, clearToken, CONFIG_PATH, DEFAULT_HOST,
 } from './config.js';
 import { loginViaBrowser, loginWithToken } from './auth.js';
-import { deploy, list, update, remove, setVisibility, comments } from './commands.js';
+import { deploy, list, update, remove, setVisibility, comments, editComment } from './commands.js';
 
 const HELP = `artifact — deploy HTML to artifact.host (or your self-hosted instance)
 
@@ -14,6 +14,7 @@ Usage:
   artifact deploy <file.html> [--ttl 7d] [--visibility public|password] [--password PW]
   artifact list                                     List your artifacts (requires auth)
   artifact comments <slug> [--json]                 List comments on an artifact (requires auth)
+  artifact comment-edit <slug> <id> "<body>"        Edit a comment's body (author only)
   artifact update <slug> <file.html> [--edit-token TOKEN]   Replace an artifact's HTML
   artifact visibility <slug> public|password [--password PW] [--edit-token TOKEN]
   artifact delete <slug>                            Delete an artifact (requires auth)
@@ -122,10 +123,20 @@ export async function run(argv) {
         const who = c.author_name || 'someone';
         const status = c.resolved ? 'resolved' : 'open';
         const where = c.anchor?.kind === 'highlight'
-          ? `"${String(c.anchor.quote || '').slice(0, 30)}"`
-          : `@${Math.round((c.anchor?.x ?? 0) * 100)}%,${Math.round((c.anchor?.y ?? 0) * 100)}%`;
+          ? `"${String(c.anchor.quote || '').slice(0, 40)}"`
+          : `[${String(c.anchor?.context || 'pin').slice(0, 40)}]`;
         process.stdout.write(`[${status}]\t${who}\t${where}\t${String(c.body).replace(/\s+/g, ' ')}\n`);
       }
+      return;
+    }
+
+    case 'comment-edit': {
+      const [slug, id, ...rest2] = rest;
+      const body = rest2.join(' ').trim();
+      if (!slug || !id || !body) throw new Error('usage: artifact comment-edit <slug> <id> "<new body>"');
+      const { host, token } = await ctx(flags);
+      await editComment(host, requireToken(token), slug, id, body);
+      process.stdout.write(`Updated comment ${id}.\n`);
       return;
     }
 
