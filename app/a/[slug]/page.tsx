@@ -5,6 +5,7 @@ import { getArtifactRepository } from '@/lib/db/factory';
 import { viewArtifact } from '@/lib/artifacts/service';
 import { cookieName, verifyPasswordCookie } from '@/lib/http/cookies';
 import { CommentableArtifact } from '@/components/comments/CommentableArtifact';
+import { publicOgInfo } from '@/lib/artifacts/og-meta';
 import { PasswordForm } from './PasswordForm';
 import { RestrictedGate } from './RestrictedGate';
 
@@ -13,20 +14,26 @@ export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const image = { url: `/a/${slug}/opengraph-image`, width: 1200, height: 630, type: 'image/png', alt: 'artifact.host' };
+  // Public artifacts unfurl with their real title/description; private ones fall
+  // back to generic brand text so nothing leaks (see publicOgInfo).
+  const og = await publicOgInfo(slug);
+  const title = og?.title ?? 'Shared on artifact.host';
+  const description = og?.description ?? 'A live artifact shared on artifact.host.';
+  const image = { url: `/a/${slug}/opengraph-image`, width: 1200, height: 630, type: 'image/png', alt: title };
   return {
+    title,
     robots: { index: false, follow: false },
     openGraph: {
       type: 'website',
       url: `/a/${slug}`,
-      title: 'artifact.host',
-      description: 'Shared on artifact.host',
+      title,
+      description,
       images: [image],
     },
     twitter: {
       card: 'summary_large_image',
-      title: 'artifact.host',
-      description: 'Shared on artifact.host',
+      title,
+      description,
       images: [image],
     },
   };
