@@ -75,12 +75,8 @@ test('mobile comments: pin sheet, composer sheet post, selection highlight, reso
   await frame.getByRole('button', { name: /^post$/i }).click();
   await expect(frame.locator('[data-ah-pin]')).toHaveCount(2);
 
-  // Exit commenting mode before tapping a pin: this prevents the document-level click
-  // capture handler (which opens a composer when mode==='commenting') from interfering
-  // with the Resolve button click. Real users naturally exit comment mode before reviewing.
-  await pill.click();
-
-  // Tap a pin → the sheet shows the comment; resolve hides it.
+  // Tap a pin → the sheet shows the comment; resolve hides it (still in comment mode — guards
+  // the onClick-vs-card-button bug).
   await frame.locator('[data-ah-pin]').first().click();
   await expect(frame.getByText('pin via sheet')).toBeVisible();
   await frame.getByRole('button', { name: /^resolve$/i }).click();
