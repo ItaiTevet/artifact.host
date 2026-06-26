@@ -15,11 +15,11 @@ describe('commentToJson', () => {
   it('never exposes email or internal author id', () => {
     const rec: CommentRecord = {
       id: 'c1', artifactSlug: 's1', authorId: 'owner-uuid', authorEmail: 'alice@example.com',
-      body: 'hi', anchor: { kind: 'pin', x: 0.5, y: 0.5 }, resolved: false, createdAt: new Date('2026-06-26T00:00:00Z'),
+      body: 'hi', anchor: { kind: 'pin', path: [0], context: '' }, resolved: false, createdAt: new Date('2026-06-26T00:00:00Z'),
     };
     const json = commentToJson(rec);
     expect(json).toEqual({
-      id: 'c1', body: 'hi', anchor: { kind: 'pin', x: 0.5, y: 0.5 },
+      id: 'c1', body: 'hi', anchor: { kind: 'pin', path: [0], context: '' },
       author_name: 'alice', resolved: false, created_at: '2026-06-26T00:00:00.000Z',
     });
     expect(JSON.stringify(json)).not.toContain('alice@example.com');
@@ -30,7 +30,7 @@ describe('commentToJson', () => {
 describe('commentToJson capability flags', () => {
   const rec: CommentRecord = {
     id: 'c1', artifactSlug: 's1', authorId: 'owner-uuid', authorEmail: 'alice@example.com',
-    body: 'hi', anchor: { kind: 'pin', x: 0.5, y: 0.5 }, resolved: false, createdAt: new Date('2026-06-26T00:00:00Z'),
+    body: 'hi', anchor: { kind: 'pin', path: [0], context: '' }, resolved: false, createdAt: new Date('2026-06-26T00:00:00Z'),
   };
   it('omits caps when none provided (back-compat)', () => {
     expect(commentToJson(rec)).not.toHaveProperty('can_resolve');

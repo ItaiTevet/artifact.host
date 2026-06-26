@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { InMemoryCommentRepository } from '@/lib/artifacts/__tests__/in-memory-comment-repository';
 import type { Anchor } from '@/lib/artifacts/comment-types';
 
-const pin: Anchor = { kind: 'pin', x: 0.5, y: 0.25 };
+const pin: Anchor = { kind: 'pin', path: [0], context: '' };
 
 describe('CommentRepository (in-memory contract)', () => {
   let repo: InMemoryCommentRepository;

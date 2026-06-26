@@ -137,8 +137,8 @@ describe('SqliteUserRepository', () => {
 });
 
 describe('SqliteCommentRepository', () => {
-  const pin: Anchor = { kind: 'pin', x: 0.5, y: 0.25 };
-  const hl: Anchor = { kind: 'highlight', x: 0.1, y: 0.2, quote: 'hello' };
+  const pin: Anchor = { kind: 'pin', path: [0], context: '' };
+  const hl: Anchor = { kind: 'highlight', quote: 'hello' };
   let db: Database.Database;
   let artifacts: SqliteArtifactRepository;
   let comments: SqliteCommentRepository;

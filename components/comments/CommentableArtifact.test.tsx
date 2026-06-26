@@ -10,7 +10,7 @@ vi.mock('@/lib/web/auth', () => ({
 }));
 
 const comment = {
-  id: 'c1', body: 'first note', anchor: { kind: 'pin', x: 0.5, y: 0.5 },
+  id: 'c1', body: 'first note', anchor: { kind: 'pin', path: [0], context: '' },
   author_name: 'alice', resolved: false, created_at: '2026-06-26T00:00:00.000Z',
   can_resolve: true, can_delete: true,
 };
@@ -56,7 +56,7 @@ describe('CommentableArtifact (ambient bridge)', () => {
 
     // Simulate the in-iframe composer posting a create intent up to the parent bridge.
     window.dispatchEvent(new MessageEvent('message', {
-      data: { type: 'create-comment', nonce, body: 'added', anchor: { kind: 'pin', x: 0.2, y: 0.2 } },
+      data: { type: 'create-comment', nonce, body: 'added', anchor: { kind: 'pin', path: [0], context: '' } },
     }));
 
     await waitFor(() => expect(

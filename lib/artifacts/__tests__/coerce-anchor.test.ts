@@ -1,31 +1,49 @@
 import { describe, it, expect } from 'vitest';
-import { coerceAnchor } from '@/lib/artifacts/comment-types';
+import { coerceAnchor, parseAnchor, serializeAnchor } from '@/lib/artifacts/comment-types';
 
 describe('coerceAnchor', () => {
-  it('accepts a pin', () => {
-    expect(coerceAnchor({ kind: 'pin', x: 0.5, y: 0.25 })).toEqual({ kind: 'pin', x: 0.5, y: 0.25 });
+  it('accepts a pin with a path + context', () => {
+    expect(coerceAnchor({ kind: 'pin', path: [2, 0, 3], context: 'Hello' }))
+      .toEqual({ kind: 'pin', path: [2, 0, 3], context: 'Hello' });
   });
-  it('accepts a highlight and coerces quote to string', () => {
-    expect(coerceAnchor({ kind: 'highlight', x: 0.1, y: 0.2, quote: 'hi' })).toEqual({ kind: 'highlight', x: 0.1, y: 0.2, quote: 'hi' });
-    expect(coerceAnchor({ kind: 'highlight', x: 0, y: 0 })).toEqual({ kind: 'highlight', x: 0, y: 0, quote: '' });
+  it('accepts an empty path (body) and caps context', () => {
+    const a = coerceAnchor({ kind: 'pin', path: [], context: 'x'.repeat(500) });
+    expect(a?.kind).toBe('pin');
+    expect(a && a.kind === 'pin' && a.path).toEqual([]);
+    expect(a && a.kind === 'pin' && a.context.length).toBe(160);
   });
-  it('drops extra fields (keeps only the known shape)', () => {
-    expect(coerceAnchor({ kind: 'pin', x: 0.5, y: 0.5, evil: 'x' })).toEqual({ kind: 'pin', x: 0.5, y: 0.5 });
+  it('rejects a pin with a non-array / negative / non-integer path', () => {
+    expect(coerceAnchor({ kind: 'pin', path: 'nope', context: '' })).toBeNull();
+    expect(coerceAnchor({ kind: 'pin', path: [-1], context: '' })).toBeNull();
+    expect(coerceAnchor({ kind: 'pin', path: [1.5], context: '' })).toBeNull();
   });
-  it('clamps coordinates to [0,1]', () => {
-    expect(coerceAnchor({ kind: 'pin', x: -0.2, y: 1.5 })).toEqual({ kind: 'pin', x: 0, y: 1 });
+  it('accepts a highlight with a quote (capped) and rejects an empty one', () => {
+    expect(coerceAnchor({ kind: 'highlight', quote: 'the text' }))
+      .toEqual({ kind: 'highlight', quote: 'the text' });
+    expect(coerceAnchor({ kind: 'highlight', quote: '   ' })).toBeNull();
+    const big = coerceAnchor({ kind: 'highlight', quote: 'q'.repeat(500) });
+    expect(big && big.kind === 'highlight' && big.quote.length).toBe(280);
   });
-  it('caps the highlight quote length to 280 chars', () => {
-    const long = 'a'.repeat(500);
-    expect(coerceAnchor({ kind: 'highlight', x: 0.1, y: 0.1, quote: long }))
-      .toEqual({ kind: 'highlight', x: 0.1, y: 0.1, quote: 'a'.repeat(280) });
-  });
-  it('rejects malformed anchors → null', () => {
+  it('rejects unknown / non-object input', () => {
     expect(coerceAnchor(null)).toBeNull();
-    expect(coerceAnchor('pin')).toBeNull();
-    expect(coerceAnchor({ kind: 'circle', x: 0, y: 0 })).toBeNull();
-    expect(coerceAnchor({ kind: 'pin', x: 'a', y: 0 })).toBeNull();
-    expect(coerceAnchor({ kind: 'pin', x: Infinity, y: 0 })).toBeNull();
-    expect(coerceAnchor({ kind: 'pin' })).toBeNull();
+    expect(coerceAnchor({ kind: 'blob' })).toBeNull();
+  });
+});
+
+describe('parseAnchor', () => {
+  it('round-trips a pin', () => {
+    expect(parseAnchor(serializeAnchor({ kind: 'pin', path: [1, 2], context: 'hi' })))
+      .toEqual({ kind: 'pin', path: [1, 2], context: 'hi' });
+  });
+  it('round-trips a highlight', () => {
+    expect(parseAnchor(serializeAnchor({ kind: 'highlight', quote: 'q' })))
+      .toEqual({ kind: 'highlight', quote: 'q' });
+  });
+  it('maps legacy x,y-only pins to an unresolvable sentinel (no throw)', () => {
+    expect(parseAnchor('{"kind":"pin","x":0.5,"y":0.7}')).toEqual({ kind: 'pin', path: [-1], context: '' });
+  });
+  it('maps malformed/empty input to the sentinel', () => {
+    expect(parseAnchor('not json')).toEqual({ kind: 'pin', path: [-1], context: '' });
+    expect(parseAnchor(null)).toEqual({ kind: 'pin', path: [-1], context: '' });
   });
 });

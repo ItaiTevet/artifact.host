@@ -17,8 +17,8 @@ const hasEnv = !!(URL && KEY);
 
 const RUN = `cmt-int-${Date.now()}`;
 const SLUG = `${RUN}-slug`;
-const pin: Anchor = { kind: 'pin', x: 0.5, y: 0.5 };
-const hl: Anchor = { kind: 'highlight', x: 0.1, y: 0.2, quote: 'hello' };
+const pin: Anchor = { kind: 'pin', path: [0], context: '' };
+const hl: Anchor = { kind: 'highlight', quote: 'hello' };
 
 describe.skipIf(!hasEnv)('SupabaseCommentRepository (integration)', () => {
   let db: SupabaseClient;

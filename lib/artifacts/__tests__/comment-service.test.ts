@@ -4,7 +4,7 @@ import { InMemoryCommentRepository } from '@/lib/artifacts/__tests__/in-memory-c
 import { createComment, listComments, editCommentBody, resolveComment, deleteComment, commentCaps, listCommentsForViewer } from '@/lib/artifacts/comment-service';
 import type { Anchor } from '@/lib/artifacts/comment-types';
 
-const pin: Anchor = { kind: 'pin', x: 0.5, y: 0.5 };
+const pin: Anchor = { kind: 'pin', path: [0], context: '' };
 const OWNER = { ownerId: 'owner-1', email: 'owner@x.com' };
 const ctx = (viewer: { ownerId: string; email?: string | null } | null, passwordVerified = false) => ({ viewer, passwordVerified });
 
