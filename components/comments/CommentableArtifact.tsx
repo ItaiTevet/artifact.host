@@ -56,6 +56,11 @@ export function CommentableArtifact({ slug, content }: { slug: string; content: 
       const fromIframe = ev.source === iframeRef.current?.contentWindow;
       const d = ev.data as { type?: string; nonce?: string; anchor?: Anchor; id?: string } | null;
       if (!d || d.nonce !== nonce) return;
+      // `anchor-proposed`/`pin-activated` are intentionally NOT source-gated to the iframe so the
+      // unit + Playwright tests can drive them via window.postMessage. A forged message (from the
+      // sandboxed artifact's own JS) can at most open an empty composer or set the active id — it
+      // can't leak the token/text or persist a comment (Post needs a real token + user action).
+      // Follow-up: client-random nonce + a `fromIframe` gate here (with a test hook). `ready` is gated.
       if (d.type === 'ready' && fromIframe) pushPins(comments);
       else if (d.type === 'anchor-proposed' && d.anchor) setPending(d.anchor);
       else if (d.type === 'pin-activated' && d.id) setActiveId(d.id);
