@@ -1,0 +1,8 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="artifact.host">
+  <rect width="32" height="32" rx="7" fill="#0e0c09"/>
+  <!-- bowl of a lowercase "a" -->
+  <circle cx="14" cy="19" r="8" fill="#fefdfb"/>
+  <circle cx="14" cy="19" r="3.4" fill="#b36b20"/>
+  <!-- stem -->
+  <rect x="19.5" y="11" width="4.5" height="16" rx="2.25" fill="#fefdfb"/>
+</svg>
