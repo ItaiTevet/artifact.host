@@ -1,7 +1,7 @@
 import { getArtifactRepository } from '@/lib/db/factory';
 import { updateArtifact, setVisibility, getOwnArtifact, deleteArtifact, setArtifactCommentsEnabled } from '@/lib/artifacts/service';
 import { ownerIdFromRequest, requireOwner } from '@/lib/http/request-auth';
-import { parsePrincipals, formatPrincipals } from '@/lib/artifacts/sharing';
+import { parsePrincipals } from '@/lib/artifacts/sharing';
 import { errorResponse } from '@/lib/http/errors';
 import { readLimitedJson } from '@/lib/http/body';
 import { REQUEST_MAX_BYTES } from '@/lib/artifacts/validate';
@@ -30,7 +30,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
       title: rec.title,
       content: rec.content,
       visibility: rec.visibility,
-      allowlist: formatPrincipals(rec.shareAllowlist),
+      allowlist: rec.shareAllowlist,          // structured SharePrincipal[] (with roles)
+      comments_enabled: rec.commentsEnabled,
       expires_at: rec.expiresAt.toISOString(),
     });
   } catch (err) {
