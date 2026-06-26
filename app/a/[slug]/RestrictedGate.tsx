@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getAccessToken } from '@/lib/web/auth';
 import { SignInGate } from '@/components/dashboard/SignInGate';
+import { CommentableArtifact } from '@/components/comments/CommentableArtifact';
 import styles from './gate.module.css';
 
 type State =
@@ -11,7 +12,7 @@ type State =
   | { phase: 'signin' }
   | { phase: 'denied' }
   | { phase: 'notfound' }
-  | { phase: 'ok'; content: string };
+  | { phase: 'ok'; content: string; commentsEnabled: boolean };
 
 const center: React.CSSProperties = {
   fontFamily: 'var(--mono, system-ui)', maxWidth: 460, margin: '18vh auto', padding: 24,
@@ -33,7 +34,7 @@ export function RestrictedGate({ slug }: { slug: string }) {
       if (res.status === 403) { setState({ phase: 'denied' }); return; }
       if (!res.ok) { setState({ phase: 'notfound' }); return; }
       const data = await res.json();
-      setState({ phase: 'ok', content: data.content });
+      setState({ phase: 'ok', content: data.content, commentsEnabled: !!data.comments_enabled });
     } catch {
       setState({ phase: 'notfound' });
     }
@@ -82,6 +83,9 @@ export function RestrictedGate({ slug }: { slug: string }) {
     );
   }
 
+  if (state.commentsEnabled) {
+    return <CommentableArtifact slug={slug} content={state.content} />;
+  }
   return (
     <iframe
       srcDoc={state.content}

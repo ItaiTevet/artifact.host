@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { getArtifactRepository } from '@/lib/db/factory';
 import { viewArtifact } from '@/lib/artifacts/service';
 import { cookieName, verifyPasswordCookie } from '@/lib/http/cookies';
+import { CommentableArtifact } from '@/components/comments/CommentableArtifact';
 import { PasswordForm } from './PasswordForm';
 import { RestrictedGate } from './RestrictedGate';
 
@@ -54,6 +55,9 @@ export default async function Page({
   // bearer, not a cookie), so a client gate fetches the content through an authorized endpoint.
   if (res.status === 'restricted') {
     return <RestrictedGate slug={slug} />;
+  }
+  if (res.commentsEnabled) {
+    return <CommentableArtifact slug={slug} content={res.content} />;
   }
   // Render the raw artifact HTML as a sandboxed srcdoc iframe (isolates artifact CSS/JS).
   return (
