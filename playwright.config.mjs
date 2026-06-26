@@ -9,6 +9,10 @@ import { join } from 'node:path';
 const PORT = 3399;
 const BASE = `http://127.0.0.1:${PORT}`;
 
+// Emulated mobile: a phone viewport with touch enabled, on chromium (we only install chromium,
+// so we avoid the webkit-defaulting device descriptors and set the mobile traits inline).
+const MOBILE = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 3 };
+
 export default defineConfig({
   testDir: './e2e-browser',
   timeout: 60_000,
@@ -16,12 +20,14 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   reporter: 'list',
-  // PW_CHROMIUM_PATH lets a sandbox without the exact pinned browser reuse a pre-installed
-  // chromium. Unset in CI, where `playwright install chromium` provides the matching build.
   use: {
     baseURL: BASE,
     launchOptions: process.env.PW_CHROMIUM_PATH ? { executablePath: process.env.PW_CHROMIUM_PATH } : {},
   },
+  projects: [
+    { name: 'desktop', testIgnore: /mobile\.spec\.mjs/ },
+    { name: 'mobile', testMatch: /mobile\.spec\.mjs/, use: MOBILE },
+  ],
   webServer: {
     command: `npx next start -p ${PORT}`,
     url: BASE,
