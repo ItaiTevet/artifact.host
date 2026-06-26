@@ -19,6 +19,23 @@ npx artifact-host deploy ./index.html # → prints the live URL
 Point it at your own instance with `--host https://artifacts.your-co.com` (or
 `ARTIFACT_HOST_URL`). See [`cli/README.md`](cli/README.md) for all commands.
 
+## Comments & collaboration
+
+Owners turn comments on per artifact via the **Allow comments** toggle (deploy panel or
+dashboard editor). Signed-in viewers can then annotate the rendered page in place — click
+**Add comment** to drop a pin, or select text to attach a highlight — and resolve or delete
+them in the side panel.
+
+On public and password-protected artifacts any signed-in viewer can post. On **restricted**
+artifacts each invited person gets a **View** or **Comment** role (set in the share editor).
+
+For agents and scripts, `artifact comments` prints the comment thread:
+
+```bash
+npx artifact-host comments <slug>        # human-readable list
+npx artifact-host comments <slug> --json # full structured records
+```
+
 ## Self-hosting
 
 The default profile needs **no external services**: a single container with an embedded
