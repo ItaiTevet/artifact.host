@@ -100,4 +100,79 @@ describe('artifact.host e2e (cloud + self-host)', () => {
     assert.equal(page.status, 200);
     assert.match(await page.text(), /password/i, 'shows the password gate instead of content');
   });
+
+  test('comments: disabled by default → enable → post → list → edit → resolve → delete', async () => {
+    const d = await (await api('/api/deploy', { method: 'POST', token: T.ownerToken, body: { content: '<h1>c</h1>', ttl: '1h' } })).json();
+    const slug = slugOf(d.url); ownedSlugs.push(slug);
+    const pin = { kind: 'pin', x: 0.5, y: 0.5 };
+
+    // disabled by default
+    assert.equal(
+      (await api(`/api/artifacts/${slug}/comments`, { method: 'POST', token: T.ownerToken, body: { body: 'hi', anchor: pin } })).status,
+      403, 'commenting is off until enabled',
+    );
+    // owner enables
+    assert.equal(
+      (await api(`/api/artifacts/${slug}`, { method: 'PATCH', token: T.ownerToken, body: { comments_enabled: true } })).status,
+      200, 'owner enables comments',
+    );
+    // owner posts
+    const created = await api(`/api/artifacts/${slug}/comments`, { method: 'POST', token: T.ownerToken, body: { body: 'first', anchor: pin } });
+    assert.equal(created.status, 201);
+    const c = (await created.json()).comment;
+    assert.ok(c.id && c.created_at, 'returns the created comment');
+    assert.deepEqual(c.anchor, pin, 'anchor round-trips');
+
+    // anyone who can view can list (public → anonymous OK)
+    const listed = await (await api(`/api/artifacts/${slug}/comments`)).json();
+    assert.ok(listed.comments.some((x) => x.id === c.id), 'comment is listed');
+
+    // edit (author = owner) + resolve + delete
+    assert.equal((await api(`/api/artifacts/${slug}/comments/${c.id}`, { method: 'PATCH', token: T.ownerToken, body: { body: 'edited' } })).status, 200);
+    assert.equal((await api(`/api/artifacts/${slug}/comments/${c.id}`, { method: 'PATCH', token: T.ownerToken, body: { resolved: true } })).status, 200);
+    assert.equal((await api(`/api/artifacts/${slug}/comments/${c.id}`, { method: 'DELETE', token: T.ownerToken })).status, 200);
+    assert.equal((await (await api(`/api/artifacts/${slug}/comments`)).json()).comments.length, 0, 'deleted');
+
+    // anonymous cannot post
+    assert.equal(
+      (await api(`/api/artifacts/${slug}/comments`, { method: 'POST', body: { body: 'anon', anchor: pin } })).status,
+      403, 'anonymous cannot post',
+    );
+    // malformed anchor → 400
+    assert.equal(
+      (await api(`/api/artifacts/${slug}/comments`, { method: 'POST', token: T.ownerToken, body: { body: 'x', anchor: { kind: 'circle' } } })).status,
+      400, 'malformed anchor rejected',
+    );
+  });
+
+  test('comments: restricted view-role cannot post, comment-role can', async (t) => {
+    if (!T.canCreateIdentities) { t.diagnostic('cloud mode: skipping multi-identity comment-role checks'); return; }
+    const d = await (await api('/api/deploy', { method: 'POST', token: T.ownerToken, body: { content: '<h1>r</h1>', ttl: '1h' } })).json();
+    const slug = slugOf(d.url); ownedSlugs.push(slug);
+    const pin = { kind: 'pin', x: 0.1, y: 0.1 };
+
+    // restricted with per-person roles (array form preserves role), and comments on
+    assert.equal((await api(`/api/artifacts/${slug}`, { method: 'PATCH', token: T.ownerToken, body: {
+      visibility: 'restricted',
+      allowlist: [
+        { value: 'commenter@allow.test', type: 'email', role: 'comment' },
+        { value: 'viewer@allow.test', type: 'email', role: 'view' },
+      ],
+    } })).status, 200);
+    assert.equal((await api(`/api/artifacts/${slug}`, { method: 'PATCH', token: T.ownerToken, body: { comments_enabled: true } })).status, 200);
+
+    const commenter = await T.signupToken('commenter@allow.test');
+    const viewer = await T.signupToken('viewer@allow.test');
+
+    assert.equal(
+      (await api(`/api/artifacts/${slug}/comments`, { method: 'POST', token: commenter, body: { body: 'ok', anchor: pin } })).status,
+      201, 'comment-role can post',
+    );
+    assert.equal(
+      (await api(`/api/artifacts/${slug}/comments`, { method: 'POST', token: viewer, body: { body: 'no', anchor: pin } })).status,
+      403, 'view-role cannot post',
+    );
+    // both can read
+    assert.equal((await api(`/api/artifacts/${slug}/comments`, { token: viewer })).status, 200, 'view-role can read comments');
+  });
 });

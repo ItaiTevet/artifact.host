@@ -57,7 +57,10 @@ export async function startTarget() {
   const dir = mkdtempSync(join(tmpdir(), 'ah-e2e-'));
   // Launch Next's binary directly with the current node — cross-platform (avoids npx, which
   // is npx.cmd on Windows and can't be spawned without a shell), with clean kill semantics.
-  const nextBin = join('node_modules', 'next', 'dist', 'bin', 'next');
+  // Use require.resolve so the path works in git worktrees where node_modules may be inherited
+  // from the parent repo rather than living in the worktree itself.
+  const { createRequire } = await import('node:module');
+  const nextBin = createRequire(import.meta.url).resolve('next/dist/bin/next');
   const proc = spawn(process.execPath, [nextBin, 'start', '-p', String(port)], {
     stdio: 'ignore',
     env: {
