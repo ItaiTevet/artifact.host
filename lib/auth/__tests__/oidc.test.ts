@@ -23,9 +23,9 @@ describe('domainAllowed', () => {
     expect(domainAllowed(cfg([]), id('anyone@gmail.com'))).toBe(true);
   });
   it('restricts to the configured domain(s)', () => {
-    expect(domainAllowed(cfg(['intezer.com']), id('alice@intezer.com'))).toBe(true);
-    expect(domainAllowed(cfg(['intezer.com']), id('bob@evil.com'))).toBe(false);
-    expect(domainAllowed(cfg(['intezer.com']), id('carol@sub.intezer.com'))).toBe(false);
+    expect(domainAllowed(cfg(['example.com']), id('alice@example.com'))).toBe(true);
+    expect(domainAllowed(cfg(['example.com']), id('bob@evil.com'))).toBe(false);
+    expect(domainAllowed(cfg(['example.com']), id('carol@sub.example.com'))).toBe(false);
   });
 });
 
@@ -42,14 +42,14 @@ describe('oidcConfig', () => {
     process.env.OIDC_ISSUER = 'https://accounts.google.com/';
     process.env.OIDC_CLIENT_ID = 'cid';
     process.env.OIDC_CLIENT_SECRET = 'secret';
-    process.env.APP_BASE_URL = 'https://artifacts.intezer.com';
-    process.env.ALLOWED_EMAIL_DOMAINS = 'Intezer.com, partner.com';
+    process.env.APP_BASE_URL = 'https://artifacts.example.com';
+    process.env.ALLOWED_EMAIL_DOMAINS = 'Example.com, partner.com';
     delete process.env.OIDC_REDIRECT_URL;
 
     const cfg = oidcConfig();
     expect(cfg.issuer).toBe('https://accounts.google.com'); // trailing slash trimmed
-    expect(cfg.redirectUri).toBe('https://artifacts.intezer.com/api/auth/oidc/callback');
-    expect(cfg.allowedDomains).toEqual(['intezer.com', 'partner.com']); // lowercased + trimmed
+    expect(cfg.redirectUri).toBe('https://artifacts.example.com/api/auth/oidc/callback');
+    expect(cfg.allowedDomains).toEqual(['example.com', 'partner.com']); // lowercased + trimmed
 
     Object.assign(process.env, saved);
   });

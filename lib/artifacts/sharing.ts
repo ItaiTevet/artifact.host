@@ -2,8 +2,8 @@ import type { SharePrincipal } from '@/lib/artifacts/types';
 
 /**
  * Parse an owner-entered allowlist (comma/newline/space separated) into principals.
- * An entry containing '@' (e.g. alice@intezer.com) is an email; a bare domain (intezer.com)
- * or a leading-'@' domain (@intezer.com) is a domain. Values are lowercased + de-duplicated.
+ * An entry containing '@' (e.g. alice@example.com) is an email; a bare domain (example.com)
+ * or a leading-'@' domain (@example.com) is a domain. Values are lowercased + de-duplicated.
  */
 export function parsePrincipals(input: string): SharePrincipal[] {
   const seen = new Set<string>();

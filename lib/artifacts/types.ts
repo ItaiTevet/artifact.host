@@ -3,7 +3,7 @@ export type Ttl = '1h' | '1d' | '7d' | '30d';
 
 /** A principal on a 'restricted' artifact's allowlist: a specific email or a whole domain. */
 export interface SharePrincipal {
-  value: string;            // 'alice@intezer.com' or 'intezer.com'
+  value: string;            // 'alice@example.com' or 'example.com'
   type: 'email' | 'domain';
   role: 'view' | 'comment'; // 'view' = read-only; 'comment' = may also post comments
 }

@@ -16,7 +16,7 @@ async function setup() {
   await deployArtifact(repo, { content: '<h1>secret</h1>', ownerId: 'owner-1', ipHash: 'ip' }, deps);
   await setVisibility(
     repo, 'shareme', 'restricted', null, { ownerId: 'owner-1' },
-    parsePrincipals('alice@intezer.com, @partner.com'),
+    parsePrincipals('alice@example.com, @partner.com'),
   );
   return repo;
 }
@@ -31,7 +31,7 @@ describe('restricted sharing', () => {
   });
 
   it('serves an allowlisted email and an allowlisted domain', async () => {
-    const byEmail = await viewArtifact(repo, 'shareme', { passwordVerified: false, viewer: { ownerId: 'x', email: 'alice@intezer.com' } }, deps);
+    const byEmail = await viewArtifact(repo, 'shareme', { passwordVerified: false, viewer: { ownerId: 'x', email: 'alice@example.com' } }, deps);
     expect(byEmail.status).toBe('ok');
     const byDomain = await viewArtifact(repo, 'shareme', { passwordVerified: false, viewer: { ownerId: 'y', email: 'bob@partner.com' } }, deps);
     expect(byDomain.status).toBe('ok');
