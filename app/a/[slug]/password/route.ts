@@ -18,7 +18,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
   }
   const jar = await cookies();
   jar.set(cookieName(slug), signPasswordCookie(slug), {
-    httpOnly: true, sameSite: 'lax', secure: true, path: `/a/${slug}`, maxAge: 1800,
+    httpOnly: true, sameSite: 'lax', secure: true, path: '/', maxAge: 1800,
   });
   return Response.redirect(new URL(`/a/${slug}`, req.url), 303);
 }
