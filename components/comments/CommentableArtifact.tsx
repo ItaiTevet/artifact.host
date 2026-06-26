@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { getAccessToken } from '@/lib/web/auth';
 import { buildAnnotationScript } from '@/lib/comments/annotation-runtime';
 import type { Anchor } from '@/lib/artifacts/comment-types';
@@ -9,7 +9,11 @@ import styles from './CommentableArtifact.module.css';
 interface Comment { id: string; body: string; anchor: Anchor; author_name: string; resolved: boolean; created_at: string; }
 
 export function CommentableArtifact({ slug, content }: { slug: string; content: string }) {
-  const [nonce] = useState(() => (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'n-' + Date.now()));
+  // useId() produces the same value on the server (SSR) and on the client during hydration,
+  // avoiding a mismatch where the iframe's injected nonce (baked at SSR time) would differ
+  // from the React component's closure nonce (generated fresh on the client with randomUUID).
+  const rawId = useId();
+  const nonce = rawId.replace(/[^a-z0-9]/gi, '') || 'n';
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [pending, setPending] = useState<Anchor | null>(null);
