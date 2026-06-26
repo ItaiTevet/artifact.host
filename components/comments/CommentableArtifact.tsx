@@ -83,6 +83,7 @@ export function CommentableArtifact({ slug, content }: { slug: string; content: 
     function onMessage(ev: MessageEvent) {
       const d = ev.data as { type?: string; nonce?: string; body?: string; anchor?: Anchor; id?: string } | null;
       if (!d || d.nonce !== nonce) return;
+      // `ready` is intentionally not source-gated (nonce-filtered only) so tests can drive it via window.postMessage; a forged `ready` is harmless (it only re-sends state INTO the iframe).
       if (d.type === 'ready') { toIframe({ type: 'auth-state', canPost }); pushComments(comments); }
       else if (d.type === 'create-comment' && typeof d.body === 'string' && d.anchor) void create(d.body, d.anchor);
       else if (d.type === 'resolve-comment' && d.id) void resolve(d.id);
