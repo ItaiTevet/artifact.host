@@ -102,4 +102,33 @@ describe('DeployPanel', () => {
     const ta = screen.getByPlaceholderText(/Paste your HTML/i) as HTMLTextAreaElement;
     expect(ta.value).toBe('');
   });
+
+  it('signed-in: enabling comments + restricted roles sends comments_enabled and structured allowlist', async () => {
+    vi.mocked(getAccountEmail).mockResolvedValue('me@example.com');
+    vi.mocked(getAccessToken).mockResolvedValue('sess-token');
+    const calls: Array<{ url: string; init: RequestInit }> = [];
+    const fetchMock = vi.fn(async (url: string, init: RequestInit) => {
+      calls.push({ url, init });
+      if (url === '/api/deploy') {
+        return new Response(JSON.stringify({ slug: 'x7k2', url: 'https://artifact.host/a/x7k2', edit_token: 'tok', expires_at: '2099-01-01T00:00:00Z' }), { status: 201, headers: { 'content-type': 'application/json' } });
+      }
+      return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { 'content-type': 'application/json' } });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<DeployPanel />);
+    await waitFor(() => expect(screen.getByRole('button', { name: /^restricted$/i })).toBeTruthy());
+    fireEvent.change(screen.getByPlaceholderText(/Paste your HTML/i), { target: { value: '<h1>hi</h1>' } });
+    fireEvent.click(screen.getByRole('button', { name: /allow comments/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^restricted$/i }));
+    fireEvent.change(screen.getByPlaceholderText(/add email/i), { target: { value: 'alice@example.com' } });
+    fireEvent.click(screen.getByRole('button', { name: /add/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^comment$/i })); // alice → comment role (exact; not the "allow comments" toggle)
+    fireEvent.click(screen.getByRole('button', { name: /Deploy artifact/i }));
+
+    await waitFor(() => expect(calls.some((c) => c.url.includes('/api/artifacts/'))).toBe(true));
+    const patches = calls.filter((c) => c.url.includes('/api/artifacts/')).map((c) => JSON.parse(c.init.body as string));
+    expect(patches).toContainEqual({ comments_enabled: true });
+    expect(patches).toContainEqual({ visibility: 'restricted', allowlist: [{ value: 'alice@example.com', type: 'email', role: 'comment' }] });
+  });
 });

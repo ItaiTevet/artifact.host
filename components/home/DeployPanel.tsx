@@ -8,6 +8,8 @@ import { validateUploadFile } from '@/lib/web/upload';
 import { ResultCard, type DeployResult } from './ResultCard';
 import { PasswordField } from '@/components/ui/PasswordField';
 import { HtmlEditor } from '@/components/ui/HtmlEditor';
+import { ShareRoleEditor } from '@/components/dashboard/ShareRoleEditor';
+import type { SharePrincipal } from '@/lib/artifacts/types';
 import styles from './DeployPanel.module.css';
 
 const TTLS: Ttl[] = ['1h', '1d', '7d', '30d'];
@@ -17,7 +19,8 @@ export function DeployPanel() {
   const [ttl, setTtl] = useState<Ttl>('7d');
   const [visibility, setVisibility] = useState<Visibility>('public');
   const [password, setPassword] = useState('');
-  const [allowlist, setAllowlist] = useState('');
+  const [allowlist, setAllowlist] = useState<SharePrincipal[]>([]);
+  const [commentsEnabled, setCommentsEnabled] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -85,6 +88,17 @@ export function DeployPanel() {
           setError(deployErrorMessage(vdata?.error)); return;
         }
       }
+      if (commentsEnabled) {
+        const slug = String(data.url).split('/a/')[1];
+        // comments_enabled is owner-only — requires the session Bearer (present when signed in).
+        const cres = await fetch(`/api/artifacts/${slug}`, {
+          method: 'PATCH', headers, body: JSON.stringify({ comments_enabled: true }),
+        });
+        if (!cres.ok) {
+          const cdata = await cres.json().catch(() => ({}));
+          setError(deployErrorMessage(cdata?.error)); return;
+        }
+      }
       setResult(data as DeployResult);
     } catch {
       setError(deployErrorMessage(undefined));
@@ -98,7 +112,7 @@ export function DeployPanel() {
   }
 
   function reset() {
-    setResult(null); setContent(''); setError(null); setPassword(''); setAllowlist('');
+    setResult(null); setContent(''); setError(null); setPassword(''); setAllowlist([]); setCommentsEnabled(false);
   }
 
   if (result) return <ResultCard result={result} onReset={reset} />;
@@ -143,6 +157,17 @@ export function DeployPanel() {
         {signedIn && (
           <button className={`${styles.pill} ${visibility === 'restricted' ? styles.on : ''}`} onClick={() => setVisibility('restricted')}>restricted</button>
         )}
+        {signedIn && (
+          <>
+            <div className={styles.optDiv} />
+            <button
+              type="button"
+              className={`${styles.pill} ${commentsEnabled ? styles.on : ''}`}
+              aria-pressed={commentsEnabled}
+              onClick={() => setCommentsEnabled((v) => !v)}
+            >💬 allow comments</button>
+          </>
+        )}
       </div>
 
       {visibility === 'password' && (
@@ -156,17 +181,7 @@ export function DeployPanel() {
 
       {visibility === 'restricted' && (
         <div className={styles.password}>
-          <textarea
-            aria-label="Allowed emails and domains"
-            className={styles.textarea}
-            style={{ minHeight: 78 }}
-            placeholder={'Who can view (one per line):\nalice@example.com\n@yourcompany.com'}
-            value={allowlist}
-            onChange={(e) => setAllowlist(e.target.value)}
-          />
-          <p style={{ fontSize: 12, color: 'var(--ink-3)', lineHeight: 1.6, marginTop: 6 }}>
-            Viewers sign in; an email grants one person, a domain grants everyone there. You always have access.
-          </p>
+          <ShareRoleEditor principals={allowlist} onChange={setAllowlist} />
         </div>
       )}
 
