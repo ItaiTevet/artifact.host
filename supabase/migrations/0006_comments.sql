@@ -14,4 +14,7 @@ create table if not exists comments (
 );
 create index if not exists comments_artifact_slug_idx on comments (artifact_slug);
 
+-- Match the deny-all posture of artifacts/api_tokens: RLS on, no policy. The app accesses
+-- comments via the service_role key (which bypasses RLS); anon/authenticated get no access.
+alter table comments enable row level security;
 grant all on table comments to service_role;
