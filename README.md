@@ -42,6 +42,14 @@ npx artifact-host auth login            # sign in via the browser (one time)
 npx artifact-host deploy ./index.html   # → https://artifact.host/a/8j3q4qv
 ```
 
+Prefer to drop the `npx artifact-host` prefix? Install the CLI once, then call it as
+`artifact` (the form shown in the demo above):
+
+```bash
+npm i -g artifact-host
+artifact deploy ./index.html
+```
+
 `deploy` works without signing in, too — it returns a one-time edit token. Signing in claims
 ownership instead. Point at your own instance with `--host https://artifacts.your-co.com` (or the
 `ARTIFACT_HOST_URL` env var). See [`cli/README.md`](cli/README.md) for every command.
