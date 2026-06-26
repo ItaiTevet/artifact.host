@@ -24,6 +24,11 @@ export interface NewComment {
   anchor: Anchor;
 }
 
+/** A valid pin path step: a non-negative integer child index. */
+function isPathStep(n: unknown): n is number {
+  return typeof n === 'number' && Number.isInteger(n) && n >= 0;
+}
+
 /** Serialize an anchor for a text column. */
 export function serializeAnchor(a: Anchor): string {
   return JSON.stringify(a);
@@ -38,9 +43,8 @@ export function parseAnchor(raw: string | null | undefined): Anchor {
       if (v && v.kind === 'highlight' && typeof v.quote === 'string') {
         return { kind: 'highlight', quote: v.quote };
       }
-      if (v && v.kind === 'pin' && Array.isArray(v.path)
-        && v.path.every((n: unknown) => typeof n === 'number' && Number.isInteger(n) && n >= 0)) {
-        return { kind: 'pin', path: v.path as number[], context: String(v.context ?? '') };
+      if (v && v.kind === 'pin' && Array.isArray(v.path) && v.path.length <= 60 && v.path.every(isPathStep)) {
+        return { kind: 'pin', path: (v.path as number[]).slice(), context: String(v.context ?? '') };
       }
     } catch { /* fall through */ }
   }
@@ -55,7 +59,7 @@ export function coerceAnchor(raw: unknown): Anchor | null {
     if (!Array.isArray(v.path) || v.path.length > 60) return null;
     const path: number[] = [];
     for (const n of v.path) {
-      if (typeof n !== 'number' || !Number.isInteger(n) || n < 0) return null;
+      if (!isPathStep(n)) return null;
       path.push(n);
     }
     return { kind: 'pin', path, context: String(v.context ?? '').slice(0, 160) };

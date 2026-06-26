@@ -46,4 +46,8 @@ describe('parseAnchor', () => {
     expect(parseAnchor('not json')).toEqual({ kind: 'pin', path: [-1], context: '' });
     expect(parseAnchor(null)).toEqual({ kind: 'pin', path: [-1], context: '' });
   });
+  it('maps an over-length path (>60) to the sentinel', () => {
+    const long = JSON.stringify({ kind: 'pin', path: Array.from({ length: 61 }, (_, i) => i), context: 'x' });
+    expect(parseAnchor(long)).toEqual({ kind: 'pin', path: [-1], context: '' });
+  });
 });
