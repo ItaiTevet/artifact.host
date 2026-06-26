@@ -8,7 +8,7 @@ import styles from './CommentableArtifact.module.css';
 
 interface Comment {
   id: string; body: string; anchor: Anchor; author_name: string; resolved: boolean;
-  created_at: string; can_resolve?: boolean; can_delete?: boolean;
+  created_at: string; can_resolve?: boolean; can_delete?: boolean; can_edit?: boolean;
 }
 
 export function CommentableArtifact({ slug, content }: { slug: string; content: string }) {
@@ -33,7 +33,7 @@ export function CommentableArtifact({ slug, content }: { slug: string; content: 
       type: 'render-comments',
       comments: list.filter((c) => !c.resolved).map((c) => ({
         id: c.id, anchor: c.anchor, body: c.body, author_name: c.author_name,
-        can_resolve: !!c.can_resolve, can_delete: !!c.can_delete,
+        can_resolve: !!c.can_resolve, can_delete: !!c.can_delete, can_edit: !!c.can_edit,
       })),
     });
   }, [toIframe]);
@@ -76,6 +76,13 @@ export function CommentableArtifact({ slug, content }: { slug: string; content: 
     if (res.ok) await load();
   }, [slug, authHeaders, load]);
 
+  const edit = useCallback(async (id: string, body: string) => {
+    const res = await fetch(`/api/artifacts/${encodeURIComponent(slug)}/comments/${id}`, {
+      method: 'PATCH', headers: await authHeaders(true), body: JSON.stringify({ body }),
+    });
+    if (res.ok) await load();
+  }, [slug, authHeaders, load]);
+
   useEffect(() => { void load(); }, [load]);
 
   useEffect(() => {
@@ -99,12 +106,13 @@ export function CommentableArtifact({ slug, content }: { slug: string; content: 
       else if (d.type === 'create-comment' && typeof d.body === 'string' && d.anchor) void create(d.body, d.anchor);
       else if (d.type === 'resolve-comment' && d.id) void resolve(d.id);
       else if (d.type === 'delete-comment' && d.id) void remove(d.id);
+      else if (d.type === 'edit-comment' && d.id && typeof d.body === 'string') void edit(d.id, d.body);
       else if (d.type === 'request-signin') window.location.href = '/dashboard';
       else if (d.type === 'card' && typeof d.open === 'boolean') setCardOpen(d.open);
     }
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
-  }, [nonce, canPost, comments, create, resolve, remove, pushComments, toIframe]);
+  }, [nonce, canPost, comments, create, resolve, remove, edit, pushComments, toIframe]);
 
   function toggleMode() {
     const next = mode === 'commenting' ? 'idle' : 'commenting';
