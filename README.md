@@ -15,7 +15,7 @@ No build step. No dependencies. Nothing for viewers to install.
 
 _Deploy from the CLI → share the link → anyone views it live._ &nbsp;·&nbsp; [▶ Full-resolution video](marketing/artifact-cli.mp4)
 
-[Live demo](https://artifact.host) · [CLI](cli/README.md) · [Self-hosting](#self-hosting) · [Roadmap](docs/ROADMAP.md)
+[Live demo](https://artifact.host) · [CLI](cli/README.md) · [Self-hosting](#self-hosting)
 
 </div>
 
@@ -32,9 +32,6 @@ moment you drop it in Slack, a PR, or a DM. Viewers just click. Nothing to insta
 
 - **Hosted:** [artifact.host](https://artifact.host) — sign in and start sharing.
 - **Self-hostable:** one container, embedded SQLite, local accounts — no external services required.
-
-> **Today, artifacts are HTML.** Markdown support (paste, upload, and rendering) is on the
-> [roadmap](docs/ROADMAP.md#5-markdown-artifact-support).
 
 ## Quick start
 
