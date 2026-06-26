@@ -16,7 +16,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
     const repo = await getArtifactRepository();
     const res = await viewArtifact(repo, slug, { passwordVerified: false, viewer });
 
-    if (res.status === 'ok') return Response.json({ content: res.content, title: res.title });
+    if (res.status === 'ok') return Response.json({ content: res.content, title: res.title, comments_enabled: res.commentsEnabled });
     if (res.status === 'restricted') {
       return res.reason === 'login'
         ? Response.json({ error: 'unauthorized', message: 'Sign in to view this artifact' }, { status: 401 })

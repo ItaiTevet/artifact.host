@@ -187,7 +187,7 @@ export async function setVisibility(
 export interface Viewer { ownerId: string; email?: string | null }
 
 export type ViewResult =
-  | { status: 'ok'; content: string; title: string | null; viewCount: number }
+  | { status: 'ok'; content: string; title: string | null; viewCount: number; commentsEnabled: boolean }
   | { status: 'password_required'; title: string | null }
   | { status: 'restricted'; title: string | null; reason: 'login' | 'denied' }
   | { status: 'not_found' };
@@ -220,6 +220,7 @@ export async function viewArtifact(
     content: record.content,
     title: record.title,
     viewCount: record.viewCount + 1,
+    commentsEnabled: record.commentsEnabled,
   };
 }
 
