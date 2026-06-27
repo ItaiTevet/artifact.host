@@ -68,6 +68,9 @@ ownership instead. Point at your own instance with `--host https://artifacts.you
   directly on the page; resolve, list, and reopen them. Readable by agents over the API/CLI.
 - **Expiry built in** — set a TTL at deploy time (`--ttl 7d`); expired artifacts are pruned automatically.
 - **Scriptable** — a REST API (`/api/deploy`, `/api/artifacts/*`) the CLI wraps, friendly to CI and agents.
+- **Sandboxed rendering** — every artifact runs in a sandboxed iframe under a Content-Security-Policy
+  that blocks outbound data channels (`fetch`/XHR/WebSocket, external form posts), so a shared page
+  can't quietly phone home. Scripts, styles, images, and CDN libraries still load normally.
 - **Self-hostable** — a single container with SQLite and local accounts; pluggable auth and database
   for when you outgrow the defaults.
 

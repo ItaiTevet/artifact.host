@@ -1,0 +1,56 @@
+# Publish the CLI (`artifact-host`) to npm when a `cli-v*` tag is pushed.
+#
+# Release flow:
+#   1. Bump "version" in cli/package.json (e.g. 0.2.0) and update CHANGELOG.md.
+#   2. Commit, then tag and push:  git tag cli-v0.2.0 && git push origin cli-v0.2.0
+#   3. This workflow runs the test suite, verifies the tag matches the package version,
+#      publishes to npm (with provenance), and creates a GitHub Release.
+#
+# One-time setup: add an npm "Automation" access token as the repo secret NPM_TOKEN
+# (Settings → Secrets and variables → Actions). Nothing publishes until that exists.
+name: Release CLI
+
+on:
+  push:
+    tags:
+      - "cli-v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the GitHub Release
+      id-token: write # npm provenance (supply-chain attestation)
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: "https://registry.npmjs.org"
+
+      # Gate the release on the test suite.
+      - run: npm ci
+      - run: npm test
+
+      # Fail loudly if the tag and the package version disagree.
+      - name: Verify tag matches cli/package.json version
+        run: |
+          PKG_VERSION="$(node -p "require('./cli/package.json').version")"
+          TAG_VERSION="${GITHUB_REF_NAME#cli-v}"
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME (version $TAG_VERSION) does not match cli/package.json version $PKG_VERSION"
+            exit 1
+          fi
+
+      - name: Publish to npm
+        working-directory: cli
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true

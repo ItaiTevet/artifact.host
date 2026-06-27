@@ -1,0 +1,33 @@
+# Automated dependency update PRs. Pairs with GitHub's Dependabot security alerts
+# (enable "Dependabot security updates" in repo Settings → Code security) so known
+# vulnerabilities get patched without manual tracking. Grouped + weekly to keep noise low.
+version: 2
+updates:
+  # App dependencies (root package.json).
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      app-dependencies:
+        patterns: ["*"]
+
+  # CLI package dependencies.
+  - package-ecosystem: npm
+    directory: "/cli"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      cli-dependencies:
+        patterns: ["*"]
+
+  # GitHub Actions used in workflows.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns: ["*"]
