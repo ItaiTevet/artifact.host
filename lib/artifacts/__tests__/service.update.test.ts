@@ -10,7 +10,7 @@ const deps = {
 };
 
 async function seed(repo: InMemoryRepository, over = {}) {
-  return deployArtifact(repo, { content: '<title>v1</title>', ipHash: 'ip1', ...over }, deps);
+  return deployArtifact(repo, { content: '<title>v1</title>', deployIp: 'ip1', ...over }, deps);
 }
 
 describe('updateArtifact', () => {

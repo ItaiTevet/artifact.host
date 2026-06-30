@@ -6,7 +6,7 @@ import { deserializeAllowlist, serializeAllowlist } from '@/lib/artifacts/sharin
 interface Row {
   id: string; slug: string; content: string; title: string | null;
   visibility: string; password_hash: string | null; owner_id: string | null;
-  edit_token_hash: string; deploy_ip_hash: string | null; share_allowlist: string | null;
+  edit_token_hash: string; deploy_ip: string | null; share_allowlist: string | null;
   created_at: Date; expires_at: Date; view_count: string; // bigint comes back as string
   comments_enabled: boolean;
 }
@@ -15,7 +15,7 @@ function toRecord(r: Row): ArtifactRecord {
   return {
     id: r.id, slug: r.slug, content: r.content, title: r.title,
     visibility: r.visibility as Visibility, passwordHash: r.password_hash,
-    ownerId: r.owner_id, editTokenHash: r.edit_token_hash, deployIpHash: r.deploy_ip_hash,
+    ownerId: r.owner_id, editTokenHash: r.edit_token_hash, deployIp: r.deploy_ip,
     shareAllowlist: deserializeAllowlist(r.share_allowlist),
     commentsEnabled: !!r.comments_enabled,
     createdAt: new Date(r.created_at), expiresAt: new Date(r.expires_at), viewCount: Number(r.view_count),
@@ -28,10 +28,10 @@ export class PgArtifactRepository implements ArtifactRepository {
   async insert(rec: NewArtifact): Promise<ArtifactRecord> {
     const { rows } = await this.pool.query<Row>(
       `insert into artifacts (slug, content, title, visibility, password_hash, owner_id,
-         edit_token_hash, deploy_ip_hash, expires_at)
+         edit_token_hash, deploy_ip, expires_at)
        values ($1,$2,$3,$4,$5,$6,$7,$8,$9) returning *`,
       [rec.slug, rec.content, rec.title, rec.visibility, rec.passwordHash, rec.ownerId,
-        rec.editTokenHash, rec.deployIpHash, rec.expiresAt],
+        rec.editTokenHash, rec.deployIp, rec.expiresAt],
     );
     return toRecord(rows[0]);
   }
@@ -98,17 +98,17 @@ export class PgArtifactRepository implements ArtifactRepository {
     return Number(rows[0].n);
   }
 
-  async countLiveByIp(ipHash: string, now: Date): Promise<number> {
+  async countLiveByIp(ip: string, now: Date): Promise<number> {
     const { rows } = await this.pool.query<{ n: string }>(
-      'select count(*) as n from artifacts where deploy_ip_hash = $1 and owner_id is null and expires_at > $2',
-      [ipHash, now],
+      'select count(*) as n from artifacts where deploy_ip = $1 and owner_id is null and expires_at > $2',
+      [ip, now],
     );
     return Number(rows[0].n);
   }
 
-  async countRecentDeploysByIp(ipHash: string, since: Date): Promise<number> {
+  async countRecentDeploysByIp(ip: string, since: Date): Promise<number> {
     const { rows } = await this.pool.query<{ n: string }>(
-      'select count(*) as n from artifacts where deploy_ip_hash = $1 and created_at > $2', [ipHash, since],
+      'select count(*) as n from artifacts where deploy_ip = $1 and created_at > $2', [ip, since],
     );
     return Number(rows[0].n);
   }

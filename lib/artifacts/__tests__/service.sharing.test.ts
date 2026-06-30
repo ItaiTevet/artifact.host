@@ -13,7 +13,7 @@ const deps: ServiceDeps = {
 
 async function setup() {
   const repo = new InMemoryRepository();
-  await deployArtifact(repo, { content: '<h1>secret</h1>', ownerId: 'owner-1', ipHash: 'ip' }, deps);
+  await deployArtifact(repo, { content: '<h1>secret</h1>', ownerId: 'owner-1', deployIp: 'ip' }, deps);
   await setVisibility(
     repo, 'shareme', 'restricted', null, { ownerId: 'owner-1' },
     parsePrincipals('alice@example.com, @partner.com'),

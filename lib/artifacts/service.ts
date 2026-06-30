@@ -59,7 +59,7 @@ export interface DeployInput {
   password?: string | null;
   ttl?: Ttl;
   ownerId?: string | null;
-  ipHash: string;
+  deployIp: string;
 }
 
 export interface DeployResult {
@@ -92,7 +92,7 @@ export async function deployArtifact(
 
   // Rate limit (per IP).
   const since = new Date(now.getTime() - RATE_LIMIT_WINDOW_MS);
-  if (await repo.countRecentDeploysByIp(input.ipHash, since) >= RATE_LIMIT_MAX) {
+  if (await repo.countRecentDeploysByIp(input.deployIp, since) >= RATE_LIMIT_MAX) {
     throw new ServiceError('rate_limited', 'Too many deploys; try again later');
   }
 
@@ -100,7 +100,7 @@ export async function deployArtifact(
   const ownerId = input.ownerId ?? null;
   const live = ownerId
     ? await repo.countLiveByOwner(ownerId, now)
-    : await repo.countLiveByIp(input.ipHash, now);
+    : await repo.countLiveByIp(input.deployIp, now);
   const cap = ownerId ? ACCOUNT_LIVE_CAP : ANON_LIVE_CAP;
   if (live >= cap) {
     throw new ServiceError('live_cap_reached', `Live artifact cap reached (${cap})`);
@@ -121,7 +121,7 @@ export async function deployArtifact(
     passwordHash,
     ownerId,
     editTokenHash: hashToken(editToken),
-    deployIpHash: input.ipHash,
+    deployIp: input.deployIp,
     expiresAt,
   });
 

@@ -1,10 +1,13 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig, configDefaults } from 'vitest/config';
 import { resolve } from 'node:path';
 
 export default defineConfig({
   test: {
     environment: 'node',
     include: ['**/*.test.{ts,tsx}'],
+    // Don't pick up tests from sibling git worktrees under .claude/worktrees — their `@` alias
+    // resolves to THIS project's source, so they'd run other branches' stale tests against our code.
+    exclude: [...configDefaults.exclude, '**/.claude/**'],
     setupFiles: ['./vitest.setup.ts'],
     // jsdom (used by component tests via the per-file `@vitest-environment jsdom`
     // pragma) pulls in ESM-only transitive deps (@csstools/css-calc). Node 22.11

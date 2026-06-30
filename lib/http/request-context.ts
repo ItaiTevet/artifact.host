@@ -30,6 +30,11 @@ export function hashIp(ip: string): string {
   return createHash('sha256').update(ip || 'unknown').digest('hex');
 }
 
+/** Resolve the client IP in plain text (not hashed), honoring TRUSTED_PROXY_HOPS. */
+export function getClientIp(req: Request): string {
+  return clientIp(req.headers.get('x-forwarded-for'));
+}
+
 export function getIpHash(req: Request): string {
   return hashIp(clientIp(req.headers.get('x-forwarded-for')));
 }

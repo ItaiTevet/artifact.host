@@ -6,7 +6,7 @@ import { deserializeAllowlist, serializeAllowlist } from '@/lib/artifacts/sharin
 interface Row {
   id: string; slug: string; content: string; title: string | null;
   visibility: Visibility; password_hash: string | null;
-  owner_id: string | null; edit_token_hash: string; deploy_ip_hash: string | null;
+  owner_id: string | null; edit_token_hash: string; deploy_ip: string | null;
   share_allowlist: string | null;
   created_at: string; expires_at: string; view_count: number; comments_enabled: boolean;
 }
@@ -15,7 +15,7 @@ function toRecord(r: Row): ArtifactRecord {
   return {
     id: r.id, slug: r.slug, content: r.content, title: r.title,
     visibility: r.visibility, passwordHash: r.password_hash,
-    ownerId: r.owner_id, editTokenHash: r.edit_token_hash, deployIpHash: r.deploy_ip_hash,
+    ownerId: r.owner_id, editTokenHash: r.edit_token_hash, deployIp: r.deploy_ip,
     shareAllowlist: deserializeAllowlist(r.share_allowlist),
     commentsEnabled: !!r.comments_enabled,
     createdAt: new Date(r.created_at), expiresAt: new Date(r.expires_at), viewCount: Number(r.view_count),
@@ -30,7 +30,7 @@ export class SupabaseArtifactRepository implements ArtifactRepository {
       slug: rec.slug, content: rec.content, title: rec.title,
       visibility: rec.visibility, password_hash: rec.passwordHash,
       owner_id: rec.ownerId, edit_token_hash: rec.editTokenHash,
-      deploy_ip_hash: rec.deployIpHash, expires_at: rec.expiresAt.toISOString(),
+      deploy_ip: rec.deployIp, expires_at: rec.expiresAt.toISOString(),
     }).select().single();
     if (error) throw error;
     return toRecord(data as Row);
@@ -110,18 +110,18 @@ export class SupabaseArtifactRepository implements ArtifactRepository {
     return count ?? 0;
   }
 
-  async countLiveByIp(ipHash: string, now: Date): Promise<number> {
+  async countLiveByIp(ip: string, now: Date): Promise<number> {
     const { count, error } = await this.db.from('artifacts')
       .select('id', { count: 'exact', head: true })
-      .eq('deploy_ip_hash', ipHash).is('owner_id', null).gt('expires_at', now.toISOString());
+      .eq('deploy_ip', ip).is('owner_id', null).gt('expires_at', now.toISOString());
     if (error) throw error;
     return count ?? 0;
   }
 
-  async countRecentDeploysByIp(ipHash: string, since: Date): Promise<number> {
+  async countRecentDeploysByIp(ip: string, since: Date): Promise<number> {
     const { count, error } = await this.db.from('artifacts')
       .select('id', { count: 'exact', head: true })
-      .eq('deploy_ip_hash', ipHash).gt('created_at', since.toISOString());
+      .eq('deploy_ip', ip).gt('created_at', since.toISOString());
     if (error) throw error;
     return count ?? 0;
   }

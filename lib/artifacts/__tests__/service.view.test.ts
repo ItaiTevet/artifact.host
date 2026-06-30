@@ -12,7 +12,7 @@ const deps = {
 describe('viewArtifact', () => {
   it('serves public content and increments views', async () => {
     const repo = new InMemoryRepository();
-    await deployArtifact(repo, { content: '<h1>hello</h1>', ipHash: 'ip1' }, deps);
+    await deployArtifact(repo, { content: '<h1>hello</h1>', deployIp: 'ip1' }, deps);
     const res = await viewArtifact(repo, 'slugW', { passwordVerified: false }, deps);
     expect(res.status).toBe('ok');
     if (res.status === 'ok') expect(res.content).toBe('<h1>hello</h1>');
@@ -22,7 +22,7 @@ describe('viewArtifact', () => {
   it('gates password content until verified, without leaking HTML', async () => {
     const repo = new InMemoryRepository();
     await deployArtifact(repo, {
-      content: '<secret/>', visibility: 'password', password: 'pw', ipHash: 'ip1',
+      content: '<secret/>', visibility: 'password', password: 'pw', deployIp: 'ip1',
     }, deps);
     const gated = await viewArtifact(repo, 'slugW', { passwordVerified: false }, deps);
     expect(gated.status).toBe('password_required');
@@ -36,7 +36,7 @@ describe('viewArtifact', () => {
 
   it('treats an expired artifact as not found', async () => {
     const repo = new InMemoryRepository();
-    await deployArtifact(repo, { content: 'x', ttl: '1h', ipHash: 'ip1' }, deps);
+    await deployArtifact(repo, { content: 'x', ttl: '1h', deployIp: 'ip1' }, deps);
     const later = { ...deps, now: () => new Date('2026-06-02T00:00:00.000Z') };
     const res = await viewArtifact(repo, 'slugW', { passwordVerified: false }, later);
     expect(res.status).toBe('not_found');

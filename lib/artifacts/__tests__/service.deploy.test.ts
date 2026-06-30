@@ -14,7 +14,7 @@ const deps = {
 describe('deployArtifact', () => {
   it('creates a public artifact and returns slug/url/token/expiry', async () => {
     const repo = new InMemoryRepository();
-    const res = await deployArtifact(repo, { content: '<title>Hi</title>', ipHash: 'ip1' }, deps);
+    const res = await deployArtifact(repo, { content: '<title>Hi</title>', deployIp: 'ip1' }, deps);
     expect(res.slug).toBe('fixedslug');
     expect(res.url).toBe('https://artifact.host/a/fixedslug');
     expect(res.editToken).toBe('fixed-edit-token-aaaaaaaaaaaaaaaa');
@@ -26,7 +26,7 @@ describe('deployArtifact', () => {
 
   it('defaults ttl to 7d and visibility to public', async () => {
     const repo = new InMemoryRepository();
-    const res = await deployArtifact(repo, { content: 'x', ipHash: 'ip1' }, deps);
+    const res = await deployArtifact(repo, { content: 'x', deployIp: 'ip1' }, deps);
     const row = await repo.findBySlug(res.slug);
     expect(row?.visibility).toBe('public');
   });
@@ -34,7 +34,7 @@ describe('deployArtifact', () => {
   it('hashes the password when visibility is password', async () => {
     const repo = new InMemoryRepository();
     const res = await deployArtifact(repo, {
-      content: 'x', visibility: 'password', password: 'secret', ipHash: 'ip1',
+      content: 'x', visibility: 'password', password: 'secret', deployIp: 'ip1',
     }, deps);
     const row = await repo.findBySlug(res.slug);
     expect(row?.visibility).toBe('password');
@@ -45,21 +45,21 @@ describe('deployArtifact', () => {
   it('rejects password visibility with no password', async () => {
     const repo = new InMemoryRepository();
     await expect(deployArtifact(repo, {
-      content: 'x', visibility: 'password', ipHash: 'ip1',
+      content: 'x', visibility: 'password', deployIp: 'ip1',
     }, deps)).rejects.toMatchObject({ code: 'password_required' });
   });
 
   it('rejects an invalid ttl', async () => {
     const repo = new InMemoryRepository();
     await expect(deployArtifact(repo, {
-      content: 'x', ttl: '99d' as never, ipHash: 'ip1',
+      content: 'x', ttl: '99d' as never, deployIp: 'ip1',
     }, deps)).rejects.toMatchObject({ code: 'invalid_ttl' });
   });
 
   it('rejects content over 5MB', async () => {
     const repo = new InMemoryRepository();
     await expect(deployArtifact(repo, {
-      content: 'a'.repeat(MAX_BYTES + 1), ipHash: 'ip1',
+      content: 'a'.repeat(MAX_BYTES + 1), deployIp: 'ip1',
     }, deps)).rejects.toMatchObject({ code: 'too_large' });
   });
 
@@ -68,9 +68,9 @@ describe('deployArtifact', () => {
     let slug = 0;
     const seqDeps = { ...deps, newSlug: () => `slug${slug++}` };
     for (let i = 0; i < ANON_LIVE_CAP; i++) {
-      await deployArtifact(repo, { content: 'x', ipHash: 'ipX' }, seqDeps);
+      await deployArtifact(repo, { content: 'x', deployIp: 'ipX' }, seqDeps);
     }
-    await expect(deployArtifact(repo, { content: 'x', ipHash: 'ipX' }, seqDeps))
+    await expect(deployArtifact(repo, { content: 'x', deployIp: 'ipX' }, seqDeps))
       .rejects.toMatchObject({ code: 'live_cap_reached' });
   });
 
@@ -79,8 +79,8 @@ describe('deployArtifact', () => {
     const slugs = ['dup', 'dup', 'unique'];
     let i = 0;
     const collidingDeps = { ...deps, newSlug: () => slugs[i++] };
-    await deployArtifact(repo, { content: 'x', ipHash: 'ip1' }, collidingDeps); // takes 'dup'
-    const res = await deployArtifact(repo, { content: 'x', ipHash: 'ip2' }, collidingDeps); // 'dup' taken -> 'unique'
+    await deployArtifact(repo, { content: 'x', deployIp: 'ip1' }, collidingDeps); // takes 'dup'
+    const res = await deployArtifact(repo, { content: 'x', deployIp: 'ip2' }, collidingDeps); // 'dup' taken -> 'unique'
     expect(res.slug).toBe('unique');
   });
 });
