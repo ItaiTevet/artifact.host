@@ -1,6 +1,12 @@
 # Automated dependency update PRs. Pairs with GitHub's Dependabot security alerts
 # (enable "Dependabot security updates" in repo Settings → Code security) so known
-# vulnerabilities get patched without manual tracking. Grouped + weekly to keep noise low.
+# vulnerabilities get patched without manual tracking.
+#
+# Grouping strategy: only minor + patch bumps are batched into one PR per ecosystem
+# (these are non-breaking and safe to merge as a unit). Major bumps are deliberately
+# left OUT of the group so each arrives as its own isolated PR you can review, take, or
+# close one at a time — instead of a single giant PR mixing safe updates with breaking
+# ones (which is what broke CI in #5: a vitest 3→4 major landed alongside everything else).
 version: 2
 updates:
   # App dependencies (root package.json).
@@ -12,6 +18,9 @@ updates:
     groups:
       app-dependencies:
         patterns: ["*"]
+        update-types:
+          - minor
+          - patch
 
   # CLI package dependencies.
   - package-ecosystem: npm
@@ -22,6 +31,9 @@ updates:
     groups:
       cli-dependencies:
         patterns: ["*"]
+        update-types:
+          - minor
+          - patch
 
   # GitHub Actions used in workflows.
   - package-ecosystem: github-actions
@@ -31,3 +43,6 @@ updates:
     groups:
       github-actions:
         patterns: ["*"]
+        update-types:
+          - minor
+          - patch
