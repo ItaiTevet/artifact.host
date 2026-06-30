@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { getAccessToken, getAccountEmail } from '@/lib/web/auth';
 import { buildAnnotationScript } from '@/lib/comments/annotation-runtime';
+import { withArtifactCsp, ARTIFACT_SANDBOX } from '@/lib/artifacts/csp';
 import type { Anchor } from '@/lib/artifacts/comment-types';
 import styles from './CommentableArtifact.module.css';
 
@@ -22,7 +23,12 @@ export function CommentableArtifact({ slug, content }: { slug: string; content: 
   const [cardOpen, setCardOpen] = useState(false);
   const [mobile, setMobile] = useState(false);
 
-  const srcDoc = useMemo(() => `${content}\n<script>${buildAnnotationScript(nonce)}</script>`, [content, nonce]);
+  // The annotation runtime is an inline <script> (allowed by the artifact CSP's open script-src)
+  // and talks to this parent via postMessage, which CSP's connect-src does not govern.
+  const srcDoc = useMemo(
+    () => withArtifactCsp(`${content}\n<script>${buildAnnotationScript(nonce)}</script>`),
+    [content, nonce],
+  );
 
   const toIframe = useCallback((msg: Record<string, unknown>) => {
     iframeRef.current?.contentWindow?.postMessage({ ...msg, nonce }, '*');
@@ -129,7 +135,7 @@ export function CommentableArtifact({ slug, content }: { slug: string; content: 
         ref={iframeRef}
         title="artifact"
         srcDoc={srcDoc}
-        sandbox="allow-scripts allow-popups allow-forms"
+        sandbox={ARTIFACT_SANDBOX}
         className={styles.frame}
       />
       {!(mobile && cardOpen) && (

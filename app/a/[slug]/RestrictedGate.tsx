@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getAccessToken } from '@/lib/web/auth';
+import { withArtifactCsp, ARTIFACT_SANDBOX } from '@/lib/artifacts/csp';
 import { SignInGate } from '@/components/dashboard/SignInGate';
 import { CommentableArtifact } from '@/components/comments/CommentableArtifact';
 import styles from './gate.module.css';
@@ -88,8 +89,8 @@ export function RestrictedGate({ slug }: { slug: string }) {
   }
   return (
     <iframe
-      srcDoc={state.content}
-      sandbox="allow-scripts allow-popups allow-forms"
+      srcDoc={withArtifactCsp(state.content)}
+      sandbox={ARTIFACT_SANDBOX}
       style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', border: 'none' }}
     />
   );

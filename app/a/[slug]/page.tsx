@@ -6,6 +6,7 @@ import { viewArtifact } from '@/lib/artifacts/service';
 import { cookieName, verifyPasswordCookie } from '@/lib/http/cookies';
 import { CommentableArtifact } from '@/components/comments/CommentableArtifact';
 import { publicOgInfo } from '@/lib/artifacts/og-meta';
+import { withArtifactCsp, ARTIFACT_SANDBOX } from '@/lib/artifacts/csp';
 import { PasswordForm } from './PasswordForm';
 import { RestrictedGate } from './RestrictedGate';
 
@@ -66,11 +67,12 @@ export default async function Page({
   if (res.commentsEnabled) {
     return <CommentableArtifact slug={slug} content={res.content} />;
   }
-  // Render the raw artifact HTML as a sandboxed srcdoc iframe (isolates artifact CSS/JS).
+  // Render the raw artifact HTML as a sandboxed srcdoc iframe (isolates artifact CSS/JS) with a
+  // CSP that blocks data-exfiltration channels (see lib/artifacts/csp.ts).
   return (
     <iframe
-      srcDoc={res.content}
-      sandbox="allow-scripts allow-popups allow-forms"
+      srcDoc={withArtifactCsp(res.content)}
+      sandbox={ARTIFACT_SANDBOX}
       style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', border: 'none' }}
     />
   );
