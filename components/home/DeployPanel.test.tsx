@@ -75,6 +75,35 @@ describe('DeployPanel', () => {
     expect(auth).toBe('Bearer sess-token-123');
   });
 
+  it('requireAuth + signed out: shows a sign-in CTA and does not deploy', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    render(<DeployPanel requireAuth />);
+
+    // Once the signed-out state is confirmed, the deploy button is replaced by a sign-in link.
+    await waitFor(() => expect(screen.getByRole('link', { name: /Sign in to deploy/i })).toBeTruthy());
+    expect(screen.getByRole('link', { name: /Sign in to deploy/i }).getAttribute('href')).toBe('/dashboard');
+    expect(screen.getByText(/account is required/i)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Deploy artifact/i })).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('requireAuth + signed in: deploys normally', async () => {
+    vi.mocked(getAccountEmail).mockResolvedValue('me@example.com');
+    vi.mocked(getAccessToken).mockResolvedValue('sess-token');
+    const fetchMock = vi.fn(async () => new Response(
+      JSON.stringify({ slug: 'x7k2', url: 'https://artifact.host/a/x7k2', edit_token: 'tok', expires_at: '2099-01-01T00:00:00Z' }),
+      { status: 201, headers: { 'content-type': 'application/json' } },
+    ));
+    vi.stubGlobal('fetch', fetchMock);
+    render(<DeployPanel requireAuth />);
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /Deploy artifact/i })).toBeTruthy());
+    typeHtml('<h1>hi</h1>');
+    fireEvent.click(screen.getByRole('button', { name: /Deploy artifact/i }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+  });
+
   it('blocks submit with no HTML', () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);

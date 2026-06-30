@@ -59,6 +59,8 @@ export interface DeployInput {
   password?: string | null;
   ttl?: Ttl;
   ownerId?: string | null;
+  /** When true, a signed-in owner is required — anonymous (ownerless) deploys are rejected. */
+  requireOwner?: boolean;
   ipHash: string;
 }
 
@@ -74,6 +76,12 @@ export async function deployArtifact(
   input: DeployInput,
   deps: ServiceDeps = defaultDeps,
 ): Promise<DeployResult> {
+  // Anonymous deploys are blocked on instances that require an account (e.g. the hosted cloud).
+  const ownerId = input.ownerId ?? null;
+  if (input.requireOwner && !ownerId) {
+    throw new ServiceError('unauthorized', 'Sign in to deploy on this instance');
+  }
+
   const size = validateSize(input.content);
   if (!size.ok) throw new ServiceError('too_large', size.error);
 
@@ -97,7 +105,6 @@ export async function deployArtifact(
   }
 
   // Live-artifact cap.
-  const ownerId = input.ownerId ?? null;
   const live = ownerId
     ? await repo.countLiveByOwner(ownerId, now)
     : await repo.countLiveByIp(input.ipHash, now);

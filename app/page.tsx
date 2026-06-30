@@ -1,6 +1,7 @@
 import { Header } from '@/components/site/Header';
 import { AgentShowcase } from '@/components/home/AgentShowcase';
 import { DeployPanel } from '@/components/home/DeployPanel';
+import { anonymousDeployDisabled } from '@/lib/config/deploy';
 import styles from './home.module.css';
 
 export default function Home() {
@@ -20,7 +21,7 @@ export default function Home() {
           <div className={styles.dividerText}>or paste it yourself</div>
           <div className={styles.dividerLine} />
         </div>
-        <DeployPanel />
+        <DeployPanel requireAuth={anonymousDeployDisabled()} />
       </main>
     </>
   );

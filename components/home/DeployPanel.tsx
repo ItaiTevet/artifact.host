@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, type KeyboardEvent, type DragEvent } from 'react';
+import Link from 'next/link';
 import { validateDeployInput, type Ttl, type Visibility } from '@/lib/web/deploy';
 import { deployErrorMessage } from '@/lib/web/errors';
 import { getAccessToken, getAccountEmail } from '@/lib/web/auth';
@@ -14,7 +15,7 @@ import styles from './DeployPanel.module.css';
 
 const TTLS: Ttl[] = ['1h', '1d', '7d', '30d'];
 
-export function DeployPanel() {
+export function DeployPanel({ requireAuth = false }: { requireAuth?: boolean }) {
   const [content, setContent] = useState('');
   const [ttl, setTtl] = useState<Ttl>('7d');
   const [visibility, setVisibility] = useState<Visibility>('public');
@@ -22,6 +23,7 @@ export function DeployPanel() {
   const [allowlist, setAllowlist] = useState<SharePrincipal[]>([]);
   const [commentsEnabled, setCommentsEnabled] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
+  const [authLoaded, setAuthLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<DeployResult | null>(null);
@@ -54,10 +56,19 @@ export function DeployPanel() {
     if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragging(false);
   }
 
-  useEffect(() => { getAccountEmail().then((e) => setSignedIn(!!e)).catch(() => setSignedIn(false)); }, []);
+  useEffect(() => {
+    getAccountEmail()
+      .then((e) => setSignedIn(!!e))
+      .catch(() => setSignedIn(false))
+      .finally(() => setAuthLoaded(true));
+  }, []);
+
+  // When the instance disallows anonymous deploys, a signed-out visitor must sign in first.
+  const mustSignIn = requireAuth && authLoaded && !signedIn;
 
   async function deploy() {
     setError(null);
+    if (requireAuth && !signedIn) { setError('Sign in to deploy on this instance.'); return; }
     const check = validateDeployInput({ content, visibility, password });
     if (!check.ok) { setError(check.error); return; }
     setBusy(true);
@@ -188,12 +199,18 @@ export function DeployPanel() {
       {error && <p className={styles.error}>{error}</p>}
 
       <div className={styles.deployRow}>
-        <button className={styles.deploy} onClick={() => void deploy()} disabled={busy}>
-          {busy ? 'Deploying…' : 'Deploy artifact'} <span className={styles.arr}>→</span>
-        </button>
+        {mustSignIn ? (
+          <Link href="/dashboard" className={styles.deploy}>
+            Sign in to deploy <span className={styles.arr}>→</span>
+          </Link>
+        ) : (
+          <button className={styles.deploy} onClick={() => void deploy()} disabled={busy}>
+            {busy ? 'Deploying…' : 'Deploy artifact'} <span className={styles.arr}>→</span>
+          </button>
+        )}
         <div className={styles.deployMeta}>
           Returns a live URL + edit token.<br />
-          {signedIn ? 'Saved to your dashboard.' : 'No account needed.'}
+          {mustSignIn ? 'An account is required to deploy here.' : signedIn ? 'Saved to your dashboard.' : 'No account needed.'}
         </div>
       </div>
     </div>

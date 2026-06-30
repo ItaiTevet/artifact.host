@@ -6,6 +6,7 @@ const MESSAGES: Record<string, string> = {
   password_required: 'Enter a password, or switch to public.',
   invalid_ttl: 'Pick a valid expiry.',
   invalid_visibility: 'Pick a valid visibility.',
+  unauthorized: 'Sign in to deploy on this instance.',
 };
 
 export function deployErrorMessage(code: string | undefined): string {
