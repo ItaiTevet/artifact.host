@@ -29,7 +29,7 @@ function newArtifact(suffix: string, over: Partial<NewArtifact> = {}): NewArtifa
     passwordHash: null,
     ownerId: null,
     editTokenHash: 'a'.repeat(64),
-    deployIp: `ip-${RUN}`,
+    deployIpHash: `ip-${RUN}`,
     expiresAt: FUTURE,
     ...over,
   };
@@ -65,7 +65,7 @@ describe.skipIf(!hasEnv)('SupabaseArtifactRepository (integration)', () => {
 
     const found = await repo.findBySlug(`${RUN}-rt`);
     expect(found?.content).toBe('<title>integration</title><h1>hi</h1>');
-    expect(found?.deployIp).toBe(`ip-${RUN}`);
+    expect(found?.deployIpHash).toBe(`ip-${RUN}`);
   });
 
   it('reports slug existence', async () => {
@@ -104,16 +104,16 @@ describe.skipIf(!hasEnv)('SupabaseArtifactRepository (integration)', () => {
 
   it('counts anonymous live artifacts by IP, excluding expired', async () => {
     const ip = `ip-count-${RUN}`;
-    await repo.insert(newArtifact('live1', { deployIp: ip, expiresAt: FUTURE }));
-    await repo.insert(newArtifact('live2', { deployIp: ip, expiresAt: FUTURE }));
-    await repo.insert(newArtifact('dead', { deployIp: ip, expiresAt: PAST }));
+    await repo.insert(newArtifact('live1', { deployIpHash: ip, expiresAt: FUTURE }));
+    await repo.insert(newArtifact('live2', { deployIpHash: ip, expiresAt: FUTURE }));
+    await repo.insert(newArtifact('dead', { deployIpHash: ip, expiresAt: PAST }));
     expect(await repo.countLiveByIp(ip, new Date())).toBe(2);
   });
 
   it('counts recent deploys by IP within a time window', async () => {
     const ip = `ip-recent-${RUN}`;
-    await repo.insert(newArtifact('r1', { deployIp: ip }));
-    await repo.insert(newArtifact('r2', { deployIp: ip }));
+    await repo.insert(newArtifact('r1', { deployIpHash: ip }));
+    await repo.insert(newArtifact('r2', { deployIpHash: ip }));
     const sinceNow = new Date(Date.now() - 60_000);
     expect(await repo.countRecentDeploysByIp(ip, sinceNow)).toBe(2);
     const sinceFuture = new Date(Date.now() + 60_000);
@@ -175,7 +175,7 @@ describe.skipIf(!hasEnv)('SupabaseArtifactRepository (integration)', () => {
   });
 
   it('deletes expired rows (global sweep) and returns a count', async () => {
-    await repo.insert(newArtifact('exp', { deployIp: `ip-exp-${RUN}`, expiresAt: PAST }));
+    await repo.insert(newArtifact('exp', { deployIpHash: `ip-exp-${RUN}`, expiresAt: PAST }));
     const deleted = await repo.deleteExpired(new Date());
     expect(deleted).toBeGreaterThanOrEqual(1);
     expect(await repo.findBySlug(`${RUN}-exp`)).toBeNull();

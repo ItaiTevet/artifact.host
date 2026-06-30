@@ -17,7 +17,7 @@ create table if not exists artifacts (
   password_hash   text,
   owner_id        text,
   edit_token_hash text not null,
-  deploy_ip       text,
+  deploy_ip_hash  text,
   share_allowlist text,
   created_at      text not null,
   expires_at      text not null,
@@ -26,7 +26,7 @@ create table if not exists artifacts (
 );
 create index if not exists artifacts_expires_at_idx on artifacts (expires_at);
 create index if not exists artifacts_owner_id_idx   on artifacts (owner_id);
-create index if not exists artifacts_ip_live_idx    on artifacts (deploy_ip, expires_at);
+create index if not exists artifacts_ip_live_idx    on artifacts (deploy_ip_hash, expires_at);
 
 create table if not exists api_tokens (
   id           text primary key,
@@ -70,12 +70,14 @@ export function applySchema(db: Database.Database): void {
   // Idempotent upgrade for DBs created before the column existed (SQLite lacks ADD COLUMN IF NOT EXISTS).
   try { db.exec('alter table artifacts add column share_allowlist text'); } catch { /* already present */ }
   try { db.exec('alter table artifacts add column comments_enabled integer not null default 0'); } catch { /* already present */ }
-  // Deployer IP is now stored in plain text: rename the legacy hashed column and drop old SHA-256
-  // values (64-char hex, never a real IP). Throws once renamed; caught on subsequent boots.
+  // Revert plaintext deployer IPs back to hashed storage: rename a plaintext `deploy_ip` column
+  // (from the short-lived plaintext build) back to `deploy_ip_hash`, then scrub any raw IPs left
+  // behind — a real SHA-256 hash is always 64 hex chars, so anything else is a plaintext IP.
+  // Throws on a fresh/already-reverted DB (no `deploy_ip` column); caught on subsequent boots.
   try {
-    db.exec('alter table artifacts rename column deploy_ip_hash to deploy_ip');
-    db.exec('update artifacts set deploy_ip = null where deploy_ip is not null and length(deploy_ip) = 64');
-  } catch { /* already renamed */ }
+    db.exec('alter table artifacts rename column deploy_ip to deploy_ip_hash');
+    db.exec('update artifacts set deploy_ip_hash = null where deploy_ip_hash is not null and length(deploy_ip_hash) <> 64');
+  } catch { /* already deploy_ip_hash */ }
 }
 
 let db: Database.Database | null = null;

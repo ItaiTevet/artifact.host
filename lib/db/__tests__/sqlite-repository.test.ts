@@ -17,7 +17,7 @@ function freshDb() {
 
 const base = (over: Partial<NewArtifact> = {}): NewArtifact => ({
   slug: 'abc123', content: '<h1>hi</h1>', title: 'Hi', visibility: 'public',
-  passwordHash: null, ownerId: null, editTokenHash: 'eth', deployIp: 'ip1',
+  passwordHash: null, ownerId: null, editTokenHash: 'eth', deployIpHash: 'ip1',
   expiresAt: new Date(Date.now() + 7 * 864e5), ...over,
 });
 
@@ -68,8 +68,8 @@ describe('SqliteArtifactRepository', () => {
 
   it('counts anonymous live + recent deploys by ip, and purges expired', async () => {
     const now = new Date();
-    await repo.insert(base({ slug: 'live', deployIp: 'ip9' }));
-    await repo.insert(base({ slug: 'gone', deployIp: 'ip9', expiresAt: new Date(now.getTime() - 1000) }));
+    await repo.insert(base({ slug: 'live', deployIpHash: 'ip9' }));
+    await repo.insert(base({ slug: 'gone', deployIpHash: 'ip9', expiresAt: new Date(now.getTime() - 1000) }));
     expect(await repo.countLiveByIp('ip9', now)).toBe(1);
     expect(await repo.countRecentDeploysByIp('ip9', new Date(now.getTime() - 60_000))).toBe(2);
     expect(await repo.deleteExpired(now)).toBe(1);

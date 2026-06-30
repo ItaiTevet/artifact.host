@@ -17,7 +17,7 @@ export interface ArtifactRecord {
   passwordHash: string | null;
   ownerId: string | null;
   editTokenHash: string;
-  deployIp: string | null;  // deployer IP in plain text (rate-limit key + audit); null for legacy rows
+  deployIpHash: string | null;
   shareAllowlist: SharePrincipal[];  // only meaningful when visibility === 'restricted'
   commentsEnabled: boolean;          // owner opt-in; gates the annotation layer + comment endpoints
   createdAt: Date;

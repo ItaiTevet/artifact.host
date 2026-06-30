@@ -5,7 +5,7 @@ function newArtifact(slug: string) {
   return {
     slug, content: '<p>hi</p>', title: null, visibility: 'public' as const,
     passwordHash: null, ownerId: 'owner-1', editTokenHash: 'h',
-    deployIp: null, expiresAt: new Date(Date.now() + 60_000),
+    deployIpHash: null, expiresAt: new Date(Date.now() + 60_000),
   };
 }
 
