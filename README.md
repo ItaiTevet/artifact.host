@@ -50,9 +50,11 @@ npm i -g artifact-host
 artifact deploy ./index.html
 ```
 
-`deploy` works without signing in, too — it returns a one-time edit token. Signing in claims
-ownership instead. Point at your own instance with `--host https://artifacts.your-co.com` (or the
-`ARTIFACT_HOST_URL` env var). See [`cli/README.md`](cli/README.md) for every command.
+On instances that allow it, `deploy` works without signing in, too — it returns a one-time edit
+token. Signing in claims ownership instead. (Some instances require an account to deploy — see
+[`DISABLE_ANONYMOUS_DEPLOY`](#authentication-options).) Point at your own instance with
+`--host https://artifacts.your-co.com` (or the `ARTIFACT_HOST_URL` env var). See
+[`cli/README.md`](cli/README.md) for every command.
 
 **From the browser** — paste or drop an `.html` file on the deploy panel at
 [artifact.host](https://artifact.host) and copy the link.
@@ -124,6 +126,12 @@ your Google OAuth client id/secret, and `ALLOWED_EMAIL_DOMAINS=your-co.com` so o
 on your domain can sign in. The instance is only an OIDC *relying party* (Authorization Code + PKCE) —
 it never runs its own OAuth server. Set the Google OAuth client's redirect URI to
 `<APP_BASE_URL>/api/auth/oidc/callback`.
+
+**Require an account to deploy.** By default anyone can deploy anonymously (no account, just a
+one-time edit token). Set `DISABLE_ANONYMOUS_DEPLOY=true` to require a signed-in session or Personal
+API Token for every deploy — anonymous deploys are then rejected with `401`. The hosted
+[artifact.host](https://artifact.host) cloud runs with this on; self-hosters leave it unset to keep
+anonymous deploys.
 
 ### Database options
 

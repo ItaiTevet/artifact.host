@@ -2,6 +2,7 @@ import { getArtifactRepository } from '@/lib/db/factory';
 import { deployArtifact } from '@/lib/artifacts/service';
 import { getIpHash } from '@/lib/http/request-context';
 import { ownerIdFromRequest } from '@/lib/http/request-auth';
+import { anonymousDeployDisabled } from '@/lib/config/deploy';
 import { errorResponse } from '@/lib/http/errors';
 import { readLimitedJson } from '@/lib/http/body';
 import { REQUEST_MAX_BYTES } from '@/lib/artifacts/validate';
@@ -31,6 +32,7 @@ export async function POST(req: Request) {
       password: body.password ?? null,
       ttl: body.ttl,
       ownerId,
+      requireOwner: anonymousDeployDisabled(),
       ipHash: getIpHash(req),
     });
     return Response.json({

@@ -74,6 +74,23 @@ describe('deployArtifact', () => {
       .rejects.toMatchObject({ code: 'live_cap_reached' });
   });
 
+  it('rejects an anonymous deploy when requireOwner is set', async () => {
+    const repo = new InMemoryRepository();
+    await expect(deployArtifact(repo, {
+      content: 'x', requireOwner: true, ipHash: 'ip1',
+    }, deps)).rejects.toMatchObject({ code: 'unauthorized' });
+    expect(await repo.slugExists('fixedslug')).toBe(false); // nothing was written
+  });
+
+  it('allows an owned deploy when requireOwner is set', async () => {
+    const repo = new InMemoryRepository();
+    const res = await deployArtifact(repo, {
+      content: 'x', requireOwner: true, ownerId: 'owner-1', ipHash: 'ip1',
+    }, deps);
+    const row = await repo.findBySlug(res.slug);
+    expect(row?.ownerId).toBe('owner-1');
+  });
+
   it('retries slug generation on collision', async () => {
     const repo = new InMemoryRepository();
     const slugs = ['dup', 'dup', 'unique'];
