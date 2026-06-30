@@ -5,7 +5,7 @@ import type { NewArtifact } from '@/lib/artifacts/repository';
 const base = (over = {}) => ({
   slug: 's1', content: '<html></html>', title: null,
   visibility: 'public' as const, passwordHash: null,
-  ownerId: null, editTokenHash: 'h', deployIpHash: 'ip',
+  ownerId: null, editTokenHash: 'h', deployIp: 'ip',
   expiresAt: new Date('2030-01-01T00:00:00Z'), ...over,
 });
 
@@ -47,7 +47,7 @@ describe('InMemoryRepository', () => {
 function newArtifact(over: Partial<NewArtifact> = {}): NewArtifact {
   return {
     slug: 'aaaa', content: '<h1>hi</h1>', title: 'hi', visibility: 'public',
-    passwordHash: null, ownerId: 'owner-1', editTokenHash: 'h', deployIpHash: 'ip',
+    passwordHash: null, ownerId: 'owner-1', editTokenHash: 'h', deployIp: 'ip',
     expiresAt: new Date(Date.now() + 86_400_000), ...over,
   };
 }

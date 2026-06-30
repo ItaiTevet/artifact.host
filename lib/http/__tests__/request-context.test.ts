@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { getIpHash, getIpHashFromHeaders, hashIp } from '@/lib/http/request-context';
+import { getClientIp, getIpHash, getIpHashFromHeaders, hashIp } from '@/lib/http/request-context';
 
 function reqWith(headers: Record<string, string>): Request {
   return new Request('https://x/api/deploy', { headers });
@@ -48,6 +48,22 @@ describe('getIpHash', () => {
   it('clamps when the chain is shorter than the configured hop count', () => {
     process.env.TRUSTED_PROXY_HOPS = '5';
     expect(getIpHash(reqWith({ 'x-forwarded-for': '203.0.113.7' }))).toBe(hashIp('203.0.113.7'));
+  });
+});
+
+describe('getClientIp', () => {
+  it('returns the raw client IP in plain text (not hashed)', () => {
+    const ip = getClientIp(reqWith({ 'x-forwarded-for': '203.0.113.7, 10.0.0.1' }));
+    expect(ip).toBe('203.0.113.7');
+  });
+
+  it('falls back to "unknown" when no IP header is present', () => {
+    expect(getClientIp(reqWith({}))).toBe('unknown');
+  });
+
+  it('honors TRUSTED_PROXY_HOPS like getIpHash, ignoring a spoofed left value', () => {
+    process.env.TRUSTED_PROXY_HOPS = '1';
+    expect(getClientIp(reqWith({ 'x-forwarded-for': '1.2.3.4, 203.0.113.7' }))).toBe('203.0.113.7');
   });
 });
 

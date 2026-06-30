@@ -7,7 +7,7 @@ import type { NewArtifact } from '@/lib/artifacts/repository';
 function seed(over: Partial<NewArtifact> = {}): NewArtifact {
   return {
     slug: 'a1', content: '<h1>hi</h1>', title: 'hi', visibility: 'public',
-    passwordHash: null, ownerId: 'owner-1', editTokenHash: 'h', deployIpHash: 'ip',
+    passwordHash: null, ownerId: 'owner-1', editTokenHash: 'h', deployIp: 'ip',
     expiresAt: new Date(Date.now() + 86_400_000), ...over,
   };
 }

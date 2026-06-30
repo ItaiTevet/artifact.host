@@ -13,7 +13,7 @@ async function seed(opts: { visibility?: 'public' | 'password' | 'restricted'; c
   const comments = new InMemoryCommentRepository();
   await artifacts.insert({
     slug: 's1', content: '<p>hi</p>', title: null, visibility: opts.visibility ?? 'public',
-    passwordHash: opts.passwordHash ?? null, ownerId: 'owner-1', editTokenHash: 'h', deployIpHash: null,
+    passwordHash: opts.passwordHash ?? null, ownerId: 'owner-1', editTokenHash: 'h', deployIp: null,
     expiresAt: new Date(Date.now() + 60_000),
   });
   if (opts.commentsEnabled) await artifacts.setCommentsEnabled('s1', true);

@@ -6,7 +6,7 @@ async function seed(ownerId: string | null) {
   const repo = new InMemoryRepository();
   await repo.insert({
     slug: 's1', content: '<p>x</p>', title: null, visibility: 'public',
-    passwordHash: null, ownerId, editTokenHash: 'eth', deployIpHash: null,
+    passwordHash: null, ownerId, editTokenHash: 'eth', deployIp: null,
     expiresAt: new Date(Date.now() + 60_000),
   });
   return repo;

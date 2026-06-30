@@ -12,7 +12,7 @@ const url = process.env.DATABASE_URL;
 
 const base = (over: Partial<NewArtifact> = {}): NewArtifact => ({
   slug: 'abc123', content: '<h1>hi</h1>', title: 'Hi', visibility: 'public',
-  passwordHash: null, ownerId: null, editTokenHash: 'eth', deployIpHash: 'ip1',
+  passwordHash: null, ownerId: null, editTokenHash: 'eth', deployIp: 'ip1',
   expiresAt: new Date(Date.now() + 7 * 864e5), ...over,
 });
 

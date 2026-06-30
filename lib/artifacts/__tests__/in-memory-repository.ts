@@ -4,8 +4,8 @@ import type { ArtifactRepository, NewArtifact } from '@/lib/artifacts/repository
 
 export class InMemoryRepository implements ArtifactRepository {
   private rows = new Map<string, ArtifactRecord>();
-  /** Deploy timestamps per ipHash, for rate-limit tests. */
-  deployLog: { ipHash: string; at: Date }[] = [];
+  /** Deploy timestamps per IP, for rate-limit tests. */
+  deployLog: { ip: string; at: Date }[] = [];
 
   async insert(rec: NewArtifact): Promise<ArtifactRecord> {
     const row: ArtifactRecord = {
@@ -17,7 +17,7 @@ export class InMemoryRepository implements ArtifactRepository {
       ...rec,
     };
     this.rows.set(rec.slug, row);
-    if (rec.deployIpHash) this.deployLog.push({ ipHash: rec.deployIpHash, at: row.createdAt });
+    if (rec.deployIp) this.deployLog.push({ ip: rec.deployIp, at: row.createdAt });
     return row;
   }
 
@@ -81,12 +81,12 @@ export class InMemoryRepository implements ArtifactRepository {
     return [...this.rows.values()].filter(r => r.ownerId === ownerId && r.expiresAt > now).length;
   }
 
-  async countLiveByIp(ipHash: string, now: Date): Promise<number> {
-    return [...this.rows.values()].filter(r => r.deployIpHash === ipHash && r.ownerId === null && r.expiresAt > now).length;
+  async countLiveByIp(ip: string, now: Date): Promise<number> {
+    return [...this.rows.values()].filter(r => r.deployIp === ip && r.ownerId === null && r.expiresAt > now).length;
   }
 
-  async countRecentDeploysByIp(ipHash: string, since: Date): Promise<number> {
-    return this.deployLog.filter(d => d.ipHash === ipHash && d.at >= since).length;
+  async countRecentDeploysByIp(ip: string, since: Date): Promise<number> {
+    return this.deployLog.filter(d => d.ip === ip && d.at >= since).length;
   }
 
   async deleteExpired(now: Date): Promise<number> {
