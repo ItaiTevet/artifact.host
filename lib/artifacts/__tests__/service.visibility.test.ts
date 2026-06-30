@@ -13,7 +13,7 @@ const deps = {
 describe('setVisibility', () => {
   it('sets a password (stored hashed) with a valid edit token', async () => {
     const repo = new InMemoryRepository();
-    const { editToken } = await deployArtifact(repo, { content: 'x', deployIp: 'ip1' }, deps);
+    const { editToken } = await deployArtifact(repo, { content: 'x', ipHash: 'ip1' }, deps);
     await setVisibility(repo, 'slugV', 'password', 'pw', { editToken });
     const row = await repo.findBySlug('slugV');
     expect(row?.visibility).toBe('password');
@@ -23,7 +23,7 @@ describe('setVisibility', () => {
   it('clears the password hash when switching back to public', async () => {
     const repo = new InMemoryRepository();
     const { editToken } = await deployArtifact(repo, {
-      content: 'x', visibility: 'password', password: 'pw', deployIp: 'ip1',
+      content: 'x', visibility: 'password', password: 'pw', ipHash: 'ip1',
     }, deps);
     await setVisibility(repo, 'slugV', 'public', null, { editToken });
     const row = await repo.findBySlug('slugV');
@@ -33,14 +33,14 @@ describe('setVisibility', () => {
 
   it('requires a password when switching to password visibility', async () => {
     const repo = new InMemoryRepository();
-    const { editToken } = await deployArtifact(repo, { content: 'x', deployIp: 'ip1' }, deps);
+    const { editToken } = await deployArtifact(repo, { content: 'x', ipHash: 'ip1' }, deps);
     await expect(setVisibility(repo, 'slugV', 'password', null, { editToken }))
       .rejects.toMatchObject({ code: 'password_required' });
   });
 
   it('rejects an unauthorized caller', async () => {
     const repo = new InMemoryRepository();
-    await deployArtifact(repo, { content: 'x', deployIp: 'ip1' }, deps);
+    await deployArtifact(repo, { content: 'x', ipHash: 'ip1' }, deps);
     await expect(setVisibility(repo, 'slugV', 'public', null, { editToken: 'wrong' }))
       .rejects.toMatchObject({ code: 'forbidden' });
   });

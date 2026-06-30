@@ -7,7 +7,7 @@ import { deserializeAllowlist, serializeAllowlist } from '@/lib/artifacts/sharin
 interface Row {
   id: string; slug: string; content: string; title: string | null;
   visibility: string; password_hash: string | null; owner_id: string | null;
-  edit_token_hash: string; deploy_ip: string | null; share_allowlist: string | null;
+  edit_token_hash: string; deploy_ip_hash: string | null; share_allowlist: string | null;
   created_at: string; expires_at: string; view_count: number; comments_enabled: number;
 }
 
@@ -15,7 +15,7 @@ function toRecord(r: Row): ArtifactRecord {
   return {
     id: r.id, slug: r.slug, content: r.content, title: r.title,
     visibility: r.visibility as Visibility, passwordHash: r.password_hash,
-    ownerId: r.owner_id, editTokenHash: r.edit_token_hash, deployIp: r.deploy_ip,
+    ownerId: r.owner_id, editTokenHash: r.edit_token_hash, deployIpHash: r.deploy_ip_hash,
     shareAllowlist: deserializeAllowlist(r.share_allowlist),
     commentsEnabled: r.comments_enabled === 1,
     createdAt: new Date(r.created_at), expiresAt: new Date(r.expires_at), viewCount: Number(r.view_count),
@@ -29,16 +29,16 @@ export class SqliteArtifactRepository implements ArtifactRepository {
     const row: Row = {
       id: randomUUID(), slug: rec.slug, content: rec.content, title: rec.title,
       visibility: rec.visibility, password_hash: rec.passwordHash, owner_id: rec.ownerId,
-      edit_token_hash: rec.editTokenHash, deploy_ip: rec.deployIp, share_allowlist: null,
+      edit_token_hash: rec.editTokenHash, deploy_ip_hash: rec.deployIpHash, share_allowlist: null,
       created_at: new Date().toISOString(), expires_at: rec.expiresAt.toISOString(), view_count: 0,
       // Satisfies the Row type; the insert SQL below omits this column, so the schema default (0) applies.
       comments_enabled: 0,
     };
     this.db.prepare(
       `insert into artifacts (id, slug, content, title, visibility, password_hash, owner_id,
-        edit_token_hash, deploy_ip, share_allowlist, created_at, expires_at, view_count)
+        edit_token_hash, deploy_ip_hash, share_allowlist, created_at, expires_at, view_count)
        values (@id, @slug, @content, @title, @visibility, @password_hash, @owner_id,
-        @edit_token_hash, @deploy_ip, @share_allowlist, @created_at, @expires_at, @view_count)`,
+        @edit_token_hash, @deploy_ip_hash, @share_allowlist, @created_at, @expires_at, @view_count)`,
     ).run(row);
     return toRecord(row);
   }
@@ -96,16 +96,16 @@ export class SqliteArtifactRepository implements ArtifactRepository {
     return Number(r.n);
   }
 
-  async countLiveByIp(ip: string, now: Date): Promise<number> {
+  async countLiveByIp(ipHash: string, now: Date): Promise<number> {
     const r = this.db.prepare(
-      'select count(*) as n from artifacts where deploy_ip = ? and owner_id is null and expires_at > ?',
-    ).get(ip, now.toISOString()) as { n: number };
+      'select count(*) as n from artifacts where deploy_ip_hash = ? and owner_id is null and expires_at > ?',
+    ).get(ipHash, now.toISOString()) as { n: number };
     return Number(r.n);
   }
 
-  async countRecentDeploysByIp(ip: string, since: Date): Promise<number> {
-    const r = this.db.prepare('select count(*) as n from artifacts where deploy_ip = ? and created_at > ?')
-      .get(ip, since.toISOString()) as { n: number };
+  async countRecentDeploysByIp(ipHash: string, since: Date): Promise<number> {
+    const r = this.db.prepare('select count(*) as n from artifacts where deploy_ip_hash = ? and created_at > ?')
+      .get(ipHash, since.toISOString()) as { n: number };
     return Number(r.n);
   }
 

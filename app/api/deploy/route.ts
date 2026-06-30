@@ -1,6 +1,6 @@
 import { getArtifactRepository } from '@/lib/db/factory';
 import { deployArtifact } from '@/lib/artifacts/service';
-import { getClientIp } from '@/lib/http/request-context';
+import { getIpHash } from '@/lib/http/request-context';
 import { ownerIdFromRequest } from '@/lib/http/request-auth';
 import { errorResponse } from '@/lib/http/errors';
 import { readLimitedJson } from '@/lib/http/body';
@@ -31,8 +31,7 @@ export async function POST(req: Request) {
       password: body.password ?? null,
       ttl: body.ttl,
       ownerId,
-      // Deployer IP stored in plain text (not hashed); also used for equality-based rate limiting.
-      deployIp: getClientIp(req),
+      ipHash: getIpHash(req),
     });
     return Response.json({
       slug: result.slug,

@@ -8,7 +8,7 @@ export interface NewArtifact {
   passwordHash: string | null;
   ownerId: string | null;
   editTokenHash: string;
-  deployIp: string | null;
+  deployIpHash: string | null;
   expiresAt: Date;
 }
 
@@ -25,7 +25,7 @@ export interface ArtifactRepository {
   listByOwner(ownerId: string, now: Date): Promise<ArtifactSummary[]>;
   deleteOwned(slug: string, ownerId: string): Promise<boolean>;
   countLiveByOwner(ownerId: string, now: Date): Promise<number>;
-  countLiveByIp(ip: string, now: Date): Promise<number>;
-  countRecentDeploysByIp(ip: string, since: Date): Promise<number>;
+  countLiveByIp(ipHash: string, now: Date): Promise<number>;
+  countRecentDeploysByIp(ipHash: string, since: Date): Promise<number>;
   deleteExpired(now: Date): Promise<number>;
 }

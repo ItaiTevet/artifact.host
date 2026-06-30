@@ -17,7 +17,7 @@ create table if not exists artifacts (
   password_hash   text,
   owner_id        text,
   edit_token_hash text not null,
-  deploy_ip       text,
+  deploy_ip_hash  text,
   share_allowlist text,
   created_at      timestamptz not null default now(),
   expires_at      timestamptz not null,
@@ -26,18 +26,19 @@ create table if not exists artifacts (
 );
 alter table artifacts add column if not exists share_allowlist text;
 alter table artifacts add column if not exists comments_enabled boolean not null default false;
--- Deployer IP is now stored in plain text: rename the legacy hashed column and drop old SHA-256
--- values (64-char hex, never a real IP). Runs once; no-op after the column has been renamed.
+-- Revert plaintext deployer IPs back to hashed storage: rename a plaintext deploy_ip column
+-- (from the short-lived plaintext build) back to deploy_ip_hash, then scrub any raw IPs left
+-- behind (a real SHA-256 hash is always 64 hex chars). Runs once; no-op once already reverted.
 do $$ begin
   if exists (select 1 from information_schema.columns
-             where table_name = 'artifacts' and column_name = 'deploy_ip_hash') then
-    alter table artifacts rename column deploy_ip_hash to deploy_ip;
-    update artifacts set deploy_ip = null where deploy_ip is not null and char_length(deploy_ip) = 64;
+             where table_name = 'artifacts' and column_name = 'deploy_ip') then
+    alter table artifacts rename column deploy_ip to deploy_ip_hash;
+    update artifacts set deploy_ip_hash = null where deploy_ip_hash is not null and char_length(deploy_ip_hash) <> 64;
   end if;
 end $$;
 create index if not exists artifacts_expires_at_idx on artifacts (expires_at);
 create index if not exists artifacts_owner_id_idx   on artifacts (owner_id);
-create index if not exists artifacts_ip_live_idx    on artifacts (deploy_ip, expires_at);
+create index if not exists artifacts_ip_live_idx    on artifacts (deploy_ip_hash, expires_at);
 
 create table if not exists api_tokens (
   id           uuid primary key default gen_random_uuid(),
